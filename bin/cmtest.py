@@ -38,7 +38,16 @@ from optparse import OptionParser
 from lib.Globals import *
 import lib.Util
 from lib.Util import Abort
+import lib.File
 #from lib.Globals import Myglobals
+import Connect;
+import File;
+import Init;
+import Logs;
+import Mav;
+import Power
+import Util
+import GUI
 
 #__________________________________________________________________________
 def main():
@@ -50,6 +59,11 @@ def main():
     global Verbose
     global Menu1
     global session
+    global Cfg_File
+    global Tmp
+    global CmdFilePath
+    global Version;
+    global CMPipe; CMPipe=os.getenv('CmTest_Release_Pipe', "No_Pipe")    
     
     #Get input from command line
     usage = "usage: %prog session#"
@@ -77,8 +91,9 @@ def main():
         OS = "Linux"
 
     #Get our base directory and find the Station Config File 
-    if Debug > 0 : print ("OS path detected is:", os.path)
-    PPATH = os.path.abspath(os.path.join(os.path.dirname(__file__),".."))
+    File.fnstrip()
+    if Debug > 0 : print ("OS path detected is:", File.fnstrip())
+    PPATH = File.fnstrip()
     if PPATH == '': PPATH = ".."
 
     if OS == "NT":
@@ -86,64 +101,35 @@ def main():
         TmpDir = expanduser("~")
     else:
         Cfg_File = '/usr/local/cmtest/testctrl.cfg'
-        TmpDir = expanduser("~") + "/tmp"
-        
-        
-        
-    my (@Check_Path) = split (/\/|\\/, $0);
-    pop @Check_Path;  pop @Check_Path;      # $FN, then 'bin'
-    our $PPath = join '/', @Check_Path;   # Now contains our root directory
-        $PPath = '..' if $PPath eq '';      # for a $0 of ./
-    our $Cfg_File;
-    our $Tmp;
+        TmpDir = expanduser("~") + "/tmp"  
 
-    if ($OS eq 'Win32') {
-         $Cfg_File = "$PPath/cfgfiles/testctrl.defaults.cfg";
-         $Tmp = $ENV{'TMP'};
-    } else {
-         $Cfg_File = '/usr/local/cmtest/testctrl.cfg';
-         $Tmp = "$ENV{'HOME'}/tmp";
-    }
+    if OS == 'nt':
+        Cfg_File = PPath + "/" + "cfgfiles/testctrl.defaults.cfg"
+        Tmp = os.getenv('TMP', "NO_TMP")
+    else :
+        Cfg_File = r'/usr/local/cmtest/testctrl.cfg'
+        Tmp = os.getenv(expanduser("~") + "/tmp", "NO_TMP")
+ 
 
-    pop @INC;
-    unshift @INC, "$PPath/lib";
-#    unshift @INC, "$ENV{'LIB'}/lib";
-    unshift @INC, '.';
+    CmdFilePath = r"../" + PPath +r"/cmdfiles"
 
-    our $CmdFilePath = "$PPath/cmdfiles";
-}
+    Logs.ASCIIColor('reset')
+    _Init()
+    GUI = 0;
+    # uneeded Perl &GUI_Init if $GUI;
+    Quiet = 0;  # Don't allow since we only have a char menu right now
+    Menu_main()
 
-our %Version;
-our $CMPipe=$ENV{'CmTest_Release_Pipe'};
-
-#use warnings;
-use Connect;
-use File;
-use Getopt::Std qw(:DEFAULT);
-use Init;
-use Logs;
-use Mav;
-use Power;
-use PT;
-use GUI;
-use Term::ANSIColor;
-
-
-    print color 'reset';
-    _Init;
-    $GUI = 0;
-    &GUI_Init if $GUI;
-    $Quiet = 0;  # Don't allow since we only have a char menu right now
-    &Menu_main();
-
-    print "done\n" unless $Quiet;
-    &Exit (0);
+    if not unless Quiet : print("done\n") 
+    Exit (0);
 
 #_____________________________________________________________________________
-sub _Init:()
-
-                #Globals:
-    our $Linux_gbl = 'Ubuntu';  # Added 3/4/10 to support Ubuntu install
+def _Init():
+    "Initialize Cmtest"
+    global Linux_gbl
+    ############################# end #########################################
+    os.name.
+    Linux_gbl = 'Ubuntu';  # Added 3/4/10 to support Ubuntu install
     if (! system "cat /etc/*release | grep -q 'Ubuntu'" ) {
     	$Linux_gbl = 'Ubuntu';
        } elsif (! system "cat /etc/*release | grep -q 'Fedora'" ) {

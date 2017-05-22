@@ -45,31 +45,31 @@ global File_List; File_List = []    # List of files in a spec'd dir (&File_List)
 global FH; FH = 'FH00'      # The nested (recursive) File Handle
 
 #__________________________________________________________________________________
-def fnstrip(str1, str2) :
+def fnstrip(Full_FN, Specifier=9) :
     "Returns specified portions of a filename Invocation: fnstrip (c:/usr/tmp/foo.txt, X)"
+    "else returns script start directory and script name"
 
-    Full_FN = str1
-    Specifier = str2
-
-    #        X:        Returns:
-    #        0        c:/usr/tmp/foo.txt     # Unchanged
-    Ret_val[0] = Full_FN
-    #*       1        c:/usr/tmp             # Parent path
-    Ret_val[1] = os.path.split(Ret_val)[0]
-    #        2        c:/usr/tmp/foo         # Parent dir + base filename
-    Ret_val[2] = os.path.splitext(Ret_val)[0]
-    #        3        foo.txt                # File name + extension
-    Ret_val[3] = os.path.split(Ret_val)[1]
-    #        4        tmp                    # Parent dir
-    Ret_val[4] = os.path.pardir(Ret_val)[1]
-    #*       6        c:/usr                 # Grand-parent path
-    Ret_val[6] = os.path.split(os.path.split(Ret_val.split(".")[-2])[0])[0]
-    #        7        foo                    # Base filename
-    Ret_val[7] = os.path.split(Ret_val.split(".")[-2])
-    #        8        txt                    # File extension
-    Ret_val[8] = Ret_val.split(".")[-1]
-
-    return ( Ret_val[Specifier] );
+    if not Full_FN == "" && Specifier < 9 :
+	#        X:        Returns:
+	#        0        c:/usr/tmp/foo.txt     # Unchanged
+	Ret_val[0] = Full_FN
+	#*       1        c:/usr/tmp             # Parent path
+	Ret_val[1] = os.path.split(Ret_val)[0]
+	#        2        c:/usr/tmp/foo         # Parent dir + base filename
+	Ret_val[2] = os.path.splitext(Ret_val)[0]
+	#        3        foo.txt                # File name + extension
+	Ret_val[3] = os.path.split(Ret_val)[1]
+	#        4        tmp                    # Parent dir
+	Ret_val[4] = os.path.pardir(Ret_val)[1]
+	#*       6        c:/usr                 # Grand-parent path
+	Ret_val[6] = os.path.split(os.path.split(Ret_val.split(".")[-2])[0])[0]
+	#        7        foo                    # Base filename
+	Ret_val[7] = os.path.split(Ret_val.split(".")[-2])
+	#        8        txt                    # File extension
+	Ret_val[8] = Ret_val.split(".")[-1]
+	return( Ret_val[Specifier])
+    else :
+	return ( os.getcwd() + "/" + sys.argv[0] )
 
 #__________________________________________________________________________________
 def File_List (str1=".",No_Recurse=0):

@@ -137,7 +137,6 @@ def Ask_User(Type, Var, Prompt) :
         Wait_Time += int(time.time()) - Start_Wait;
 
     if not Var == "":
-        ##################################################### STOP ##############################################
         # Perl ${$Var} = Data;  Not sure yet how to conver or if Ask_User is needed, Python recomends Dictionaly instead
         Globals[Var] = Data
         return (0)

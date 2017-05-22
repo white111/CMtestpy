@@ -89,6 +89,9 @@ global PN; PN              = []                   # @PN & @SN: [0] = system, [1]
 global Quiet; Quiet           = 0                    # $opt_q parameter
 global SN; SN              = []
 global MAC; MAC              = []     			 # Added JW format "xx.xx.xx.xx.xx:x"(mac:qty)
+global Cfg_File;  Cfg_File          = ""           #Not sure this is needed(pulled in from Perl)
+global Tmp; Tmp                = ""                 #Not sure this is needed(pulled in from Perl)
+global CmdFilePath; CmdFilePath = ""            #Not sure this is needed(pulled in from Perl)
 
 global Stats; Stats           = {                     # Used by the Stats mechanism
             'ECT'        :'',                  # Expected Completion Time
