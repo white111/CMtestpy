@@ -7,7 +7,7 @@
 #			
 # Descr:      Define Cmtest globals
 #
-# Version:    (See below) $Id: Globals.pm,v 1.9 2011/12/12 22:54:28 joe Exp $
+# Version:    (See below) $Id$
 #
 # Changes:    Conversion from Globals.pm perl to Python
 #			

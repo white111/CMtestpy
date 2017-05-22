@@ -7,7 +7,7 @@
 #
 # Descr:      Main Test executive
 #
-# Version:    0.1 $Id: cmtest.pl,v 1.6 2011/12/12 22:53:09 joe Exp $
+# Version:    0.1 $Id$
 #
 # Changes:   05/18/17 Conversion from perl - JSW
 #
@@ -20,7 +20,7 @@
 #
 #            Copyright (c) 1995 - 2005 Paul Tindle. All rights reserved.
 #            Copyright (c) 2005-2008 Stoke. All rights reserved.
-#            Copyright (c) 2005-2008 Joe White. All rights reserved.
+#            Copyright (c) 2017 Joe White. All rights reserved.
 #
 ################################################################################
 VER= 'v0.1 5/9/2017'; # Conversion to Python from Perl 050917 JSW
@@ -43,8 +43,53 @@ from lib.Util import Abort
 #__________________________________________________________________________
 def main():
 
-    our $OS = ($ENV {'OS'} eq 'Windows_NT') ? 'Win32' : 'Linux';
 
+    #Debug flag 
+    #Debug = 1
+    global Debug
+    global Verbose
+    global Menu1
+    global session
+    
+    #Get input from command line
+    usage = "usage: %prog session#"
+    parser = OptionParser(usage)
+    parser.add_option("-d", "--debug", action="count",  dest="Debug", default=0,
+                      help="Turn on Debug Stetments")
+    parser.add_option("-v", "--verbose", action="count",  dest="Verbose", default=0,
+                      help="Turn on more output") 
+    parser.add_option("-B", "--Batch", type="int",  dest="Menu1", default=0,
+                      help="Batch Mode - no Menu prompt, does not support multi level menu" )  
+    parser.add_option("-s", "--session", dest="Session", type="int", default=0,
+                      help="Set Sesion #, Default is first avaiable")
+    (options, args) = parser.parse_args()
+    #if not options.Session :
+        #parser.error("-s session# required")
+    Debug += options.Debug
+    Verbose += options.Verbose
+    Menu1 = Options.Menu1
+    Session = Options.session
+
+    OS = os.name
+    if os.name == "nt":
+        OS = "NT"
+    else:
+        OS = "Linux"
+
+    #Get our base directory and find the Station Config File 
+    if Debug > 0 : print ("OS path detected is:", os.path)
+    PPATH = os.path.abspath(os.path.join(os.path.dirname(__file__),".."))
+    if PPATH == '': PPATH = ".."
+
+    if OS == "NT":
+        Cfg_File = PPATH + "\cfgfiles\testctrl.defaults.cfg"
+        TmpDir = expanduser("~")
+    else:
+        Cfg_File = '/usr/local/cmtest/testctrl.cfg'
+        TmpDir = expanduser("~") + "/tmp"
+        
+        
+        
     my (@Check_Path) = split (/\/|\\/, $0);
     pop @Check_Path;  pop @Check_Path;      # $FN, then 'bin'
     our $PPath = join '/', @Check_Path;   # Now contains our root directory

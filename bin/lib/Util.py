@@ -7,7 +7,7 @@
 #
 # Descr:      ??
 #
-# Version:    (See below) $Id: PT.py,v 1.9 2008/02/22 21:00:51 joe Exp $
+# Version:    (See below) $Id$
 #
 # Changes:
 #	      Conversion to Python from PT.pm perl lib 0503017 JSW

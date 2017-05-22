@@ -7,7 +7,7 @@
 #
 # Descr:      Standalone utility to create the abort flag to stop a test cleanly
 #
-# Version:    0.1 $Id: abort.py,v 1.3 2008/02/20 23:05:33 joe Exp $
+# Version:    0.1 $Id$
 #
 # Changes:   Convert from Perl 050317 JSW
 #			
@@ -21,7 +21,7 @@
 #
 #            Copyright (c) 1995 - 2005 Paul Tindle. All rights reserved.
 #            Copyright (c) 2005-2008 Stoke. All rights reserved.
-#            Copyright (c) 2005-2008 Joe White. All rights reserved.
+#            Copyright (c) 2017 Joe White. All rights reserved.
 #
 ################################################################################
 global CMtestVersion; CMtestVersion = {}

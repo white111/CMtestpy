@@ -8,7 +8,7 @@
 #
 # Descr:      Subs for log files operations
 #
-# Version:    (See below) $Id: Logs.pm,v 1.10 2011/01/21 18:38:56 joe Exp $
+# Version:    (See below) $Id$
 #
 # Changes:    Conversion to Python from Perl 050917 JSW
 #
