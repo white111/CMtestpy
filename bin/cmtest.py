@@ -40,11 +40,11 @@ import lib.Util
 from lib.Util import Abort
 import lib.File
 #from lib.Globals import Myglobals
-import Connect;
-import File;
-import Init;
-import Logs;
-import Mav;
+import Connect
+import File
+import Init
+import Logs
+import Mav
 import Power
 import Util
 import GUI
@@ -62,8 +62,11 @@ def main():
     global Cfg_File
     global Tmp
     global CmdFilePath
-    global Version;
-    global CMPipe; CMPipe=os.getenv('CmTest_Release_Pipe', "No_Pipe")    
+    global Version
+    global Session
+    global SessionForce
+    global CMPipe; CMPipe=os.getenv('CmTest_Release_Pipe', "No_Pipe") 
+    global UserID
     
     #Get input from command line
     usage = "usage: %prog session#"
@@ -76,13 +79,19 @@ def main():
                       help="Batch Mode - no Menu prompt, does not support multi level menu" )  
     parser.add_option("-s", "--session", dest="Session", type="int", default=0,
                       help="Set Sesion #, Default is first avaiable")
+    parser.add_option("-F", "--Force", dest="Force", type="int", default=0,
+                      help="Force Session #")
+    parser.add_option("-U", "--User", dest="User", default="None",
+                      help="Set User ID")    
     (options, args) = parser.parse_args()
     #if not options.Session :
         #parser.error("-s session# required")
     Debug += options.Debug
     Verbose += options.Verbose
-    Menu1 = Options.Menu1
-    Session = Options.session
+    Menu1 = options.Menu1
+    Session = options.session
+    SessionForce = options.Force
+    UserID = options.User
 
     OS = os.name
     if os.name == "nt":
@@ -115,68 +124,42 @@ def main():
 
     Logs.ASCIIColor('reset')
     _Init()
-    GUI = 0;
+    GUI = 0
     # uneeded Perl &GUI_Init if $GUI;
     Quiet = 0;  # Don't allow since we only have a char menu right now
-    Menu_main()
+    Menu_main()  # Bring up menu and start excution
 
-    if not unless Quiet : print("done\n") 
-    Exit (0);
+    if not Quiet : print("done\n") 
+    Exit (0)
 
 #_____________________________________________________________________________
 def _Init():
     "Initialize Cmtest"
     global Linux_gbl
-    ############################# end #########################################
+    global Erc
+    global Force
     os.name.
     Linux_gbl = 'Ubuntu';  # Added 3/4/10 to support Ubuntu install
-    if (! system "cat /etc/*release | grep -q 'Ubuntu'" ) {
-    	$Linux_gbl = 'Ubuntu';
-       } elsif (! system "cat /etc/*release | grep -q 'Fedora'" ) {
-        $Linux_gbl = 'Fedora';
-       } elsif (! system "cat /etc/*release | grep -q 'CentOS'" ) {
-        $Linux_gbl = 'CentOS';
-       } else {
-         $Linux_gbl = 'unknown';
-         print "Un-suported linux type found, I am going to die now";
-         die
-       }
-    our @Menu_List = ();
-    our @Menu_Desc = ();
-    our @Menu_Cmd  = ();
-
-    &Init_All (0);
-
-    our $Usage = "
-    Usage: $0 [-dfghqv] [-L <NewLoopCount>] [ -M Menu_Item ] [-Z <Session>]\n
-      Where:
-         -d:     Debug mode
-         -f:#    Force [-Z session]
-         -g:*    GUI mode
-         -h:     Print this message
-         -L:*    Loopcount over-ride
-         -M:     Menu Item [batch mode]
-         -q:     Quiet mode
-         -v:     Verbose mode (ignored with -q)
-         -Z:     Session no [Default: first available from 1 ]
-
-       [* = WIP feature - not yet implemented / released]
-       [# = Deprecated]
-";
-     $Erc = 101;
-
-             # Process the command line arguments...
-
-     &getopts ('C:L:M:U:Z:dfghqv1') || &Invalid ($Usage);
-
-     #!!! really??? -f option (hidden):  Force (Serial no update, ...)
-
-     $CmdFilePath = $opt_C unless $opt_C eq ''; #Hidden $CmdFilePath override!
-     our $Force = ($opt_f) ? 1 : 0;
-     $Erc = 0;
-     &Init_Also (0);
-}
-
+    try:
+        with open ("/etc/*release", r) as fh :
+            for line in fh:    
+		if re.search(r"Ubuntu", line) : Linux_gbl = 'Ubuntu'
+		elif re.search(r"Fedora", line) : Linux_gbl = 'Fedora'
+		elif re.search(r"CentOS", line) : Linux_gbl = 'CentOS'
+		else : 
+		    Linux_gbl = 'unknown';
+		    print ("Un-suported linux type found, I am going to die now")
+		    exit()
+    except:
+	print ("Un-suported linux type found, are we Windows? I am going to die now")
+	exit()	
+    
+    Init_All (0)
+    Erc = 101
+    Force = options.Force
+    Erc = 0
+    Init_Also (0)
+    return
 #____________________________________________________________________________________
 
 if __name__ == "__main__":

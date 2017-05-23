@@ -169,6 +169,13 @@ global Globals; Globals = {   # Globals Dictionary will use to replace perl stri
             "UUT_IP_Base"     : 21,
             "UUT_IP_Range"    : 21
             }
+global Menu_List;Menu_List = {};
+global Menu_Desc;Menu_Desc = {};
+global Menu_Cmd;Menu_Cmd  = {};
+global GP_Path; GP_Path ="none"
+
+global Util_only;  Util_only = 0
+global UserID; UserID = "none"
 
 print ("Globals init .. Done")
 
