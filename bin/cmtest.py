@@ -71,6 +71,7 @@ def main():
     global CMPipe; CMPipe=os.getenv('CmTest_Release_Pipe', "No_Pipe") 
     global UserID
     global Out_File
+    global Loop_overide
     global shucks; shucks = 0
 
     #Get input from command line
@@ -84,6 +85,8 @@ def main():
                       help="Batch Mode - no Menu prompt, does not support multi level menu" )  
     parser.add_option("-s", "--session", dest="Session", type="int", default=0,
                       help="Set Sesion #, Default is first avaiable")
+    arser.add_option("-L", "--Loop", dest="Loop", type="int", default=0,
+                     help="Overide all Loop counts(seconds)")    
     parser.add_option("-F", "--Force", dest="Force", type="int", default=0,
                       help="Force Session #")
     parser.add_option("-U", "--User", dest="User", default="None",
@@ -100,6 +103,7 @@ def main():
     SessionForce = options.Force
     UserID = options.User
     Out_File = options.Output
+    Loop_overide = option.Loop
 
     OS = os.name
     if os.name == "nt":

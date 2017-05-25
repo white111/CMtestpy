@@ -43,6 +43,7 @@ import os.path
 import pexpect #non standard library requires pip install pexpect before use, expect for python
 import pexpect.fdpexpect
 import serial
+import string
 
 #__________________________________________________________________________
 def Alert(Msg):
@@ -161,6 +162,7 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
         #!!! <Set> and <UnSet> are still prototypes - DO NOT USE yet!
 
         global Stats
+        global TimeOut
         my Done = ""
         my Arg0 = ''
 
@@ -210,13 +212,13 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
         if KeyWord == 'alert' :
                 if Check_Only: next
                 Done = Alert(Arg)
-        "<Ask>    - Type, Var, Prompt Prompt the operator and wait for a <return>"
+                "<Ask>    - Type, Var, Prompt Prompt the operator and wait for a <return>"
         elif KeyWord == 'ask' :
                 if Check_Only: next
                 try : Type,VarName,PromptOp = Arg.split()) :
                         Ask_User (Type,VarName,PromptOp); #Util.py
                 except: pass
-        "<Bypass>    - Skip a section"
+                "<Bypass>    - Skip a section"
         elif KeyWord == 'bypass':  #Start of Bypass
                 if Check_Only: next
                 if Bypass : Exit (999, "Nested bypass not allowed")
@@ -258,405 +260,355 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
                         Tag (Cached,"Exiting comm session");
                         Comm.send (ExitCmd+"\n")
                           
-                "<End>    - Exit command file"      
+                "<ettc>    - Estimated time to completion update"      
         elif KeyWord == 'ettc' :
                 if Check_Only: next
                 Stats['TTG'] = Arg;
                 if not Loop_Time : Stats['ECT'] = time.time() + Arg ;
                 Stats.Update_All
                 Tag (Cached,"TTG = %s, ECT = %s \[%s . \]" % Arg, Stats['ECT'], PT_Date (Stats['ECT'],1));
-####################################  Stop #########################################
-                } elsif ($KeyWord eq 'exec') {
-                        next if $Check_Only;
-                        &Tag ($Cached,"Exec'ing $Arg");
-                        $Arg =~ s/^\&//;                        # Remove the leading &
-                if ( $Arg =~ /(.*)\((.*)\)/ ) {
-                        &{$1}($2);
-                        } else {
-                                &{$Arg};
-                        }
-                } elsif ($KeyWord eq 'getdata') {
-                        next if $Check_Only;
-                        &Tag ($Cached,"Writing data to OutFile");
-                        # Added to improve XML log parsing
-                $Last_Send =~ s/[ ,\/,\\,__,>]/_/g;  #Change to single underscore
-                $Arg = $Last_Send if $Arg eq '';  # Affects the XML file
-                $Last_Send = "" ;
-                &Screen_Data ($Arg, 0, 0);
-                } elsif ($KeyWord eq 'include') {
-                        &Tag ($Cached,"Sourcing include file $Arg");
-
-                        if ($Arg =~ /(.*)\$\{(.*)\}(.*)/) {
-                                &Exit (999, "Embedded Cmd file variable $2 not defined")
-                            if ${$2} eq '';
-                        $Arg = $1 . ${$2} . $3;
-                        }
-                        &Process_Cmd_File ($Comm, "$CmdFilePath/$Arg", $Check_Only);
-                &Print_Log (11, "Returning to cmd file $CFName");
-                #!!!                    unless $Check_Only;
-
-        } elsif ($KeyWord eq 'includex') {
-                next if $Check_Only;
-                &Tag ($Cached,"Sourcing include file $Arg");
-                        my $File ="$Tmp/$Arg.tmp";
-                next if ! -f $File;
-                &Process_Cmd_File ($Comm, $File, 0);
-                &Print_Log (11, "Returning to cmd file $CFName");
-                #!!!            unless $Check_Only;
-
-        } elsif ($KeyWord eq 'loop') {                # Start of loop
-                next if $Check_Only;
-                &Exit (999, "Nested loops not allowed")
-                        if $Caching;
-                $Caching = 1;                   # Turns on looping
-                &Tag ($Cached,"Starting loop at line $Line");
-                        $Arg = $opt_L unless $opt_L eq ''; # It's been overridden with -L
-                $Loop_Time = $Arg;
-                $Stats{'TTG'} = $Arg;        # This now overrides a previous ETTC
-                $Stats{'ECT'} = time + $Arg;
-
-                } elsif ($KeyWord eq '/loop') {      # This is dealt with in the
-                        next if $Check_Only;        #   calling sub &Process_Cmd_File
-
-                        } elsif ($KeyWord eq 'msg') {
-                                next if $Check_Only;
-                        $Stats{'Result'} =~ /^(.)/;
-                        #    $Msg =   $Msg . $Term_Msg if (defined $Term_Msg && $Term_Msg ne '');  # Added For HA
-                &Print_Log (1, "\#$Stats{'Session'}$1:$Term_Msg $Arg");
-
-                } elsif ($KeyWord eq 'prompt') {
-                        $Prompt = $Arg;
-
-                        } elsif ($KeyWord eq 'power') {
-                                next if $Check_Only;
-                        $Erc = &Power ($Arg);
-
-                        } elsif ($KeyWord =~ /^send/) {
-                                next if $Check_Only;
-                                my $ArgStr = 'null';
-                        if ($KeyWord =~ /^sendslow/) {
-                            $ArgStr = ($KeyWord eq 'sendslow') ? "$Arg<cr>" : $Arg;
-                        } else {
-                                        $ArgStr = ($KeyWord eq 'send') ? "$Arg<cr>" : $Arg;
-                                }
-                &Tag ($Cached,"Sending ($KeyWord) >$ArgStr<");
-                        $Log_Str .= "[$KeyWord $ArgStr]\n";
-                $Comm -> print_log_file ("\n#: $KeyWord >$ArgStr<\n") if $Debug;
+                "<exec>    - exec a python subroutine" 
+        elif KeyWord == 'exec': 
+                if Check_Only: next
+                Tag (Cached,"Exec'ing %s" % Arg);
+                Arg = Arg[2:]                        # Remove the leading &
+                try:
+                        Func,val,_ = Arg.split("\(|\)")   # Split on "(" ")"
+                        try: Func(val)
+                        except: Print_Log (11, "Function call %s\(%s\) does not exsist" % Func,Val)
+                except:
+                        try: Func()
+                        except: Print_Log (11, "Function call %s\(\) does not exsist" % Func)
+                "<GetData>    - Grab expect buffer and log(XML)" 
+        elif KeyWord == 'getdata' :
+                if Check_Only: next
+                Tag (Cached,"Writing data to OutFile")
                 # Added to improve XML log parsing
-                $Last_Send = "" if ($Last_KeyWord eq 'send' || $Last_KeyWord eq 'sendslow');
-                $Last_KeyWord = $KeyWord;
-                $Last_Send = $Last_Send . $Arg;
-                $Arg = $Arg . "\n" if ($KeyWord eq 'send' || $KeyWord eq 'sendslow');
-                if ($KeyWord =~ /^sendslow/) {
-                        $Comm -> send_slow (0.01,"$Arg");
-                        } else {
-                                #$Comm -> send_slow (0.01,"$Arg");
-                                $Comm -> send ("$Arg") ;
-                        }
-
-                #    } elsif ($KeyWord eq 'set') {
-        } elsif ($KeyWord =~ /set$/) {
-                next if $Check_Only;
-                $Arg =~ s/^\$//;                        # Remove the leading $
-                        my $Val = ($KeyWord eq 'set') ? 1 : 0;
-                &Tag ($Cached,"Setting \$$Arg = $Val");
-                &Exit (999, "Attempted (un)set command on undeclared global \$" . $Arg)
-                if !defined ${$Arg};
-                ${$Arg} = $Val;
-                &Print_Log (1, "Global var $Arg = $Val");
-
-                        } elsif ($KeyWord =~ /sleep$/) {
-                                next if $Check_Only;
-                                if ($KeyWord eq 'sleep') {
-                                sleep $Arg;
-                            } else {
-                                sleep $Arg/1000;  #!!! Change when usleep is loaded
-                                # usleep $Arg;
-                        }
-                        $Log_Str .= "[$KeyWord $Arg]\n";
-
-                } elsif ($KeyWord eq 'timeout') {
-                        $TimeOut = $Arg ;
-
-                        #    } elsif ($KeyWord eq 'unset') {
-        #        next if $Check_Only;
-        #        $Arg =~ s/^\$//;                        # Remove the leading $
-        #        &Tag ($Cached,"Setting \$$Arg false");
-        #        ${$Arg} = 0;
-
-        } elsif ($KeyWord =~ /^wait/) {                # <Wait> and <WaitFor>
-                next if $Check_Only;
-                if ($Prompt =~ /^\^/ ) { ;   #IF A ^ IS FOUND AT THE BEGIINING OF THE PROMPT REGeXPRESSION MODE IS TRIGGERED
-                                                                                $Arg = $Prompt if $KeyWord eq 'wait';  # Original
-                                                                                    $Arg =~ s/^\^(.*)/^\x1b.[0-9]+;[0-9]+H.\x1b.[0-9]+;[0-9]+H.?$1|^$1/ ; #"$Arg0\x1b.[0-9]+;[0-9]+H.\x1b.[0-9]+;[0-9]+H.?$Arg|$Arg0$Arg"
-                                         #[23;80H [24;1H> ]  http://vt100.net/docs/vt100-ug/chapter3.html#CUP, http://sourceforge.net/docman/display_doc.php?docid=9977&group_id=6894
-                                         $Arg0 = '-re';
-                   #print("New connect $Arg\n");
-                        } else {
-                                                        $Arg = $Prompt if $KeyWord eq 'wait';  # Original
-                            #print("Original connect [$Arg]\n");
-                            $Arg0 = $Arg;
+                Last_Send = re.sub("[ ,\/,\\,__,>]","_", Last_Send)  #Change to single underscore
+                if Arg == '' : Arg = Last_Send   # Affects the XML file
+                Last_Send = ""
+                Screen_Data(Arg, 0, 0)
+                "<include>    - Include another command file"
+        elif KeyWord == 'include' :
+                Tag (Cached,"Sourcing include file %s" % Arg)
+                p = re.compile(r"(.*?)\$\{(.*?)\}(.*?)")
+                try: 
+                        val = p.findall(Arg) 
+                        if val[2]  == '' : Exit (999, "Embedded Cmd file variable %s not defined" % val[2])
+                        Arg = val[1] + &(val[2])  + val[3]
+                        Process_Cmd_File (Comm, "%s/%s" % CmdFilePath, Arg %, Check_Only)
+                Print_Log (11, "Returning to cmd file %s" % CFName)
+                "<includex>    - Include another command file from tmp dir no check"
+        elif KeyWord == 'includex' :
+                if Check_Only: next
+                Tag (Cached,"Sourcing include file %s" % Arg);
+                File ="%s/%s" % Tmp, Arg.tmp
+                if  not os.path.exists(File) : next
+                Process_Cmd_File (Comm, File, 0)
+                Print_Log (11, "Returning to cmd file %s", % CFName);
+                "<loop>    - Start a loop"
+        elif KeyWord == 'loop' :                # Start of loop
+                if Check_Only: next
+                if Caching : Exit (999, "Nested loops not allowed")
+                Caching = 1                  # Turns on looping
+                Tag (Cached,"Starting loop at line %s" Line)
+                if not Loop_overide == 0  :  Arg = Loop_overide  # It's been overridden with -L
+                Loop_Time = Arg
+                Stats['TTG'] = Arg;        # This now overrides a previous ETTC
+                Stats['ECT'] = time.time() + Arg
+                "</loop>    - end  a loop"
+        elif KeyWord == '/loop' :      # This is dealt with in the
+                if Check_Only: next        #   calling sub &Process_Cmd_File
+                "<Msg>  Print Msg to terminal"
+        elif KeyWord == 'msg' :
+                if Check_Only: next
+                Stats['Result'] = a.lstrip = Arg.rstrip
+                #    $Msg =   $Msg . $Term_Msg if (defined $Term_Msg && $Term_Msg ne '');  # Added For HA
+                Print_Log (1, "\#%s%s:%s %s" % Stats['Session'], Stats['Result'], Term_Msg, Arg)
+                "<Prompt>  Prompt the Operatior and wait"
+        elif KeyWord == 'prompt' :
+                Prompt = Arg
+                "<Power>  Manage power Manual or Auto"
+        elif KeyWord == 'power' :
+                if Check_Only: next
+                Erc = Power(Arg);
+                "<Send>  Send a comand to our output stream"
+        elif KeyWord.find(r"^send") :
+                if Check_Only: next
+                ArgStr  = 'null'
+                if KeyWord.find(r"^sendslow") :
+                        if KeyWord == 'sendslow' : ArgStr = Arg + "\n" 
+                        else: ArgStr = Arg
+                else :
+                        if  KeyWord == 'send' : ArgStr = Arg + "\n"
+                        else: ArgStr = Arg
+                Tag (Cached,"Sending (%s) >%s<" % KeyWord,ArgStr )
+                Log_Str += "[%s %s]\n" % KeyWord ,ArgStr
+                if Debug : Comm.write(print_log_file ("\n#: $KeyWord >$ArgStr<\n"))
+                # Added to improve XML log parsing
+                if Last_KeyWord == 'send' or Last_KeyWord == 'sendslow' : Last_Send = ""
+                Last_KeyWord = KeyWord;
+                Last_Send = Last_Send + Arg
+                if KeyWord == 'send' or KeyWord == 'sendslow': Arg = Arg + "\n" 
+                if KeyWord.find("^sendslow") :
+                        Comm.write(send_slow(0.01,Arg))
+                else :
+                        Comm.write(send ("$Arg"))
+                "<Set>  Set a Varible 1:0"
+        elif KeyWord.find(r"set$") :
+                if Check_Only: next
+                Arg = Arg[2:]         # Remove the leading $
+                if KeyWord == 'set' :   Val =  1
+                else:  Val =  0
+                Tag (Cached,"Setting %s = %s" % Arg, Val)
+                setattr(self,
+                try: Arg
+                except: Exit (999, "Attempted (un)set command on undeclared global \$" + Arg)
+                self.Arg = Val  # Yes this will not work yet, working on it
+                Print_Log (1, "Global var %s = %s" % Arg = Val)
+                "<Sleep>  Sleep x Seconds uSleep micor sec"
+        elif KeyWord.find(r"sleep$") :
+                if Check_Only: next
+                if KeyWord == 'sleep' : time.sleep(Arg/1000000.0)
+                else : time.sleep(Arg/1000.0)  #!!! Change when usleep is loaded
+                Log_Str += "[%s %s]\n" % KeyWord,Arg
+                "<Timout>  TIme in Seconds to wait for Text"
+        elif KeyWord == 'timeout' :
+                TimeOut = Arg 
+                "<wait>  TIme in Seconds to wait for Text in supplied string"
+        elif KeyWord.find(r"^wait") :                # <Wait> and <WaitFor>
+                if Check_Only: next
+                if Prompt.find(r"^\^") :   #IF A ^ IS FOUND AT THE BEGIINING OF THE PROMPT REGeXPRESSION MODE IS TRIGGERED
+                        if KeyWord == 'wait' : Arg = Prompt  # Original
+                        #$Arg =~ s/^\^(.*)/^\x1b.[0-9]+;[0-9]+H.\x1b.[0-9]+;[0-9]+H.?$1|^$1/ ; #"$Arg0\x1b.[0-9]+;[0-9]+H.\x1b.[0-9]+;[0-9]+H.?$Arg|$Arg0$Arg"
+                        #[23;80H [24;1H> ]  http://vt100.net/docs/vt100-ug/chapter3.html#CUP, http://sourceforge.net/docman/display_doc.php?docid=9977&group_id=6894
+                        Arg0 = '-re'
+                        #print("New connect $Arg\n");
+                else :
+                        if KeyWord == 'wait' : Arg = Prompt   # Original
+                        #print("Original connect [$Arg]\n");
+                        Arg0 = Arg;
                         #$Arg0 = NULL;
-                                                }
-                        &Tag ($Cached,"Waiting $TimeOut for $Arg");
-                $Log_Str .= "[Waiting $TimeOut for \"$Arg\"]\n";
-                $Comm -> clear_accum();
-                        $Comm -> print_log_file ("\n#: Waiting $TimeOut for $Arg\n") if $Debug;
+                Tag (Cached,"Waiting %s for %s" % TimeOut, Arg);
+                Log_Str += "[Waiting %s for \"%s\"]\n" % TimeOut,Arg
+                Comm.write(clear_accum())
+                if Debug:Comm.write(print_log_file ("\n#: Waiting %s for %s\n" % TimeOut,Arg))
                 #my (@Ex) = $Comm -> expect($TimeOut, $Arg); # Original  Statement
-                #my (@Ex) = $Comm -> expect($TimeOut,'-re', "$Arg0\x1b.[0-9]+;[0-9]+H.\x1b.[0-9]+;[0-9]+H.?$Arg|$Arg0$Arg");
-                my (@Ex) = $Comm -> expect($TimeOut,$Arg0, $Arg );
-                        &Dump_Expect_Data(@Ex);
-                        if ($Ex[1]) {
-                            #if ($Exit_On_Timeout or $Startup) {
-                            if ($Startup) {
-                                 &Exit (32, "Expect timed out (Waiting $TimeOut for $Arg) at $CFName line $Line!");
-                                } elsif ( $Exit_On_Timeout) {
-                                     &Log_Error ("Timeout!: $Log_Str");
-                                     &Final;
-
-                                } else {
-                                     &Log_Error ("Timeout!: $Log_Str");    # Unless $Mask_TMO
-                                 &Print_Log ( 11, "Timed out after $Log_Str");
-                             }
-                         } else {
-                                $Startup = 0; # We got though at lease 1 wait without a timeout!
-                        }
-                        $Buffer = $Comm -> before();
-                        $Log_Str = '';
-
-                } else {
-
-                        &Exit (999, "(Invalid keyword \"$KeyWord\" at line $Line in Cmd file $CFName)");
-                }
-                #print "\t\t\tDebug=$Debug, EOT=$Exit_On_Timeout, EOE=$Exit_On_Error\n";
-                #&PETC ("Connect::Exec_Cmd: Debug is set") if ($Debug);
-                return ($Done);
-
-        }
-        #__________________________________________________________________________
-        sub Add_2_Flat_Cmd_File {
-
-                my ($Str) = @_;
-
-                my $FH;
-
-                chomp $Str;
-                open ($FH, ">>$Tmp/FlatCmdFile.dat") || &Exit (3, "Can't open $FH for cat");
-                print $FH "$Str\n";
-                close $FH;
-        }
-
+                Ex = Comm.write(expect(TimeOut,Arg0, Arg ))
+                Dump_Expect_Data(Ex);
+                if Ex[1] :
+                #if ($Exit_On_Timeout or $Startup) {
+                        if Startup :
+                                Exit (32, "Expect timed out (Waiting $TimeOut for $Arg) at $CFName line $Line!");
+                        elif Exit_On_Timeout :
+                                Log_Error ("Timeout!: %s" % Log_Str)
+                                Final()
+                        else :
+                                Log_Error ("Timeout!: %s" % Log_Str)    # Unless $Mask_TMO
+                                Print_Log ( 11, "Timed out after %s" % Log_Str)
+                else :  Startup = 0 # We got though at lease 1 wait without a timeout!
+                Buffer = Comm.write(before()
+                Log_Str = ''
+        else :
+                Exit (999, "(Invalid keyword \"%s\" at line %s in Cmd file %s)" % KeyWord, Line, CFName);
+        #print "\t\t\tDebug=$Debug, EOT=$Exit_On_Timeout, EOE=$Exit_On_Error\n";
+        #&PETC ("Connect::Exec_Cmd: Debug is set") if ($Debug);
+        return (Done)
+        
 #__________________________________________________________________________
-sub Open_Port {
+def Add_2_Flat_Cmd_File(Str) :
 
-        my ($ConType, $ConExec) = @_;
-        my $Comm;
-        my $Trap = '';
-        my $user = '';
-    my $pw	= '';
+        FH
+        chomp(Str)
+        try: FH = open ($Tmp+ r"/FlatCmdFile.dat", 'r+')  
+        except: Exit (3, "Can't open %s for cat" % FH)
+        FH.write(Str+"\n")
+        close(FH)
+        return()        
+#__________________________________________________________________________
+def Open_Port(ConType, ConExec):
+        "Open a Serial, TFP,SSH,Telnet for read write"
+        Comm
+        Trap = ''
+        user = ''
+        pw	= ''
 
-    if ($ConType eq 'Serial') {
-            $Header = 'Welcome';
-            $ExitCmd = "\cA" . "Q\n";
-            $Trap = 'lock failed';
-            } elsif ($ConType eq 'Telnet') {
-                $ExitCmd = 'exit';
-                $Header = 'Connected to';
-                } elsif ($ConType eq 'TermServer') {
-                    $ExitCmd = "\c]quit";
-                $Header = 'Connected to';
-                $Trap = 'is being used by';
-            } elsif ($ConType eq 'TermServerPW') {
+        if ConType == 'Serial':  # Using Minicom
+                Header = 'Welcome'
+                ExitCmd = "\cA" + "Q\n"
+                Trap = 'lock failed'
+        elif ConType == 'Telnet' : # 
+                ExitCmd = 'exit'
+                Header = 'Connected to'
+        elif ConType == 'TermServer' :
+                ExitCmd = "\c]quit"
+                Header = 'Connected to'
+                Trap = 'is being used by'
+        elif ConType  == 'TermServerPW' : #Termserver needs a PW
                 #Welcome to the MRV Communications' LX Series Server
                 #Port 11 Speed 9600
                 #login: root
-           #Password: *******
+                #Password: *******
                 #Password:
-                if ( $Default_Termserver_Config{ExitCmd} )  {
-                        $ExitCmd = $Default_Termserver_Config{ExitCmd};
-                        } else {
-                                $ExitCmd = "\c]quit";
-                        }
-                $Header = 'Welcome to the MRV Communications';
-                $pw = $Default_Termserver_Config{PORTPW};
-                $user = $Default_Termserver_Config{USER};
-                $Trap = 'Login incorrect';
-        } else {
-                die 'What am I doing here??';
-        }
-    &Print2XLog("Logging in to port: with User:$user PW:$pw ",0,1);
+                if Default_Termserver_Config[ExitCmd] :
+                        ExitCmd = Default_Termserver_Config[ExitCmd]
+                else :
+                        ExitCmd = "\c]quit"
+                Header = 'Welcome to the MRV Communications';
+                pw = Default_Termserver_Config[PORTPW]
+                user = Default_Termserver_Config[USER]
+                Trap = 'Login incorrect'
+        else :
+                exit( 'What am I doing here??')
+        Print2XLog("Logging in to port: with User:%s PW:%s " % user,pw %,0,1);
 
-    my $Count = 5;
-    my $Done = 0;
+        Count = 5
+        Done = 0
 
-    &Exit (110, "Call to Exec_Cmd_File on $OS system") if $OS eq 'Win32';
-                    my $Msg = "Spawning $ConType connection: $ConExec ..";
-    &Print_Log (1, $Msg) if $Debug;
-    #&Print_Log (0, $Msg) if ! $Debug;
+        if OS == 'NT' : Exit (110, "Call to Exec_Cmd_File on NT system") ;
+        Msg = "Spawning %s connection: %s .." % ConType, ConExec
+        if Debug :Print_Log (1, Msg) 
+        #&Print_Log (0, $Msg) if ! $Debug;
 
-        while (! $Done and $Count) {
+        while (not Done and Count) :
+                try : Comm = Expect.spawn(ConExec)
+                except Exit (31, "Couldn't start : $!\n" % ConExec);
+                Comm.log_file(Tmp+"/ExComm.log", "w")
+                if Debug : Expect.Exp_Internal(Verbose)        # Turn on verbose mode if -v
+                #                        $Expect::Debug = 1;
+                #                        $Comm->log_file("$Tmp/expect.log", "w");        # Log all!
 
-                $Comm = Expect->spawn($ConExec)
-                or &Exit (31, "Couldn't start $ConExec: $!\n");
+                Comm.log_stdout(0)                # prevents the program's output from being shown on our STDOUT
+                Expect.Log_Stdout(0)        # but this one does it globally!
 
-                $Comm->log_file("$Tmp/ExComm.log", "w");
+                # The acid test to see if we are connected...
+                if not Quiet: print (".") 
+                Ex = Comm.expect(5, Header, Trap)
+                Comm.expect(3,"ogin:")
+                Dump_Expect_Data(Ex)
+                if Ex[0] == 1 :     # if ($Comm -> expect(5, $Header)) { 1 if matched, undef if timeout
+                        # Got the expected response
+                        if  not user == '' :   # login needed
+                                Exec_Cmd(Comm, 'login', 'login', "send", user)
+                                Comm.expect(3,"ssword")
+                                Exec_Cmd (Comm, 'password', 'password', "send", pw)
+                                if Comm.expect(3,"incorrect").find('incorrect') : Count -=1
+                        Done = 1
+                elif Ex[0] == 2 : # Caught the trap
+                        Exit (999, "Trapped Error condition: $Trap")
+                else : Count -= 1
 
-            if ($Debug) {
-                 $Expect::Exp_Internal = $Verbose;        # Turn on verbose mode if -v
-#                        $Expect::Debug = 1;
-#                        $Comm->log_file("$Tmp/expect.log", "w");        # Log all!
-         }
+                if Done and Count :                                        # There were some retries left!
+                        if not Quiet : print " done!\n" 
+                elif not Done and Count :                       # Go round again
+                        time.sleep(4/1000000.0)
+                else :        # We're out of retries!
+                        if not Quiet: print(" Failed!\n" )
+                        Msg = "%s FAILED to start!!\n" % ConExec
+                        Exit (31, Msg)
 
-         $Comm->log_stdout(0);                # prevents the program's output from being shown on our STDOUT
-             $Expect::Log_Stdout = 0;        # but this one does it globally!
-
-         # The acid test to see if we are connected...
-
-                print "." unless $Quiet;
-                my (@Ex) = $Comm -> expect(5, $Header, $Trap);
-                $Comm -> expect(3,"ogin:");
-                &Dump_Expect_Data(@Ex);
-                if ($Ex[0] == 1) {      # if ($Comm -> expect(5, $Header)) { 1 if matched, undef if timeout
-                                        # Got the expected response
-                                        if ( $user ne '') {    # login needed
-                                                               &Exec_Cmd ($Comm, 'login', 'login', "send", $user);
-                                                        $Comm -> expect(3,"ssword");
-                                                        &Exec_Cmd ($Comm, 'password', 'password', "send", $pw);
-                                     if ($Comm -> expect(3,"incorrect") =~ 'incorrect') {
-                            $Count--;
-                    }
-                    }
-                                        $Done = 1;
-                                 } elsif ($Ex[0] == 2) { # Caught the trap
-                                                         &Exit (999, "Trapped Error condition: $Trap");
-                                      } else {
-                                              $Count--;
-                                      }
-
-                if ($Done and $Count) {                                        # There were some retries left!
-                        print " done!\n" unless $Quiet;
-                } elsif (! $Done and $Count) {                        # Go round again
-                        sleep 4;
-                } else {        # We're out of retries!
-                        print " Failed!\n" unless $Quiet;
-                        my $Msg = "$ConExec FAILED to start!!\n";
-                        &Exit (31, $Msg);
-                }
-        }
-        unless ($Trap eq '') {
-                (@Ex) = $Comm -> expect(2, $Trap);
-                &Dump_Expect_Data(@Ex);
-                if ($Ex[0]) {      # undef if timeout
+        if not Trap == '' :
+                Ex = Comm.expect(2, Trap)
+                Dump_Expect_Data(Ex)
+                if Ex[0] :      # undef if timeout
                                # Got the trap response
-                           &Exit (999, "Trapped Error condition: $Trap");
-                           }
+                        Exit (999, "Trapped Error condition: $Trap");
 
-        }
-
-        return ($Comm);
-}
+        return (Comm)
 #__________________________________________________________________________
-sub Process_Cmd_File {
-
-        my ($Comm, $File, $Check_Only, $No_Worries) = @_;
-        my ($CFName) = fnstrip ($File, 3);
-        my $Endtime = '';
-
-
-        return (0) if not -f $File and $No_Worries;  #Only execute it it
+def Process_Cmd_File(Comm, File, Check_Only, No_Worries) :
+        "Loop through command files"
+        CFName = fnstrip(File, 3)
+        Endtime = ''
+        if not os.path.exists(File) and No_Worries: return (0) ;  #Only execute it it
                                                         # the file exists
+        if Check_Only : Msg = "Syntax checking" 
+        else : Msg = 'Processing'
+        Msg += " Cmd file \'%s\'"% CFName
+        if Check_Only or Debug or Verbose : Print_Log (1, "%s ..." % Msg)
 
-        my ($Msg) = ($Check_Only) ? 'Syntax checking' : 'Processing';
-        $Msg .= " Cmd file \'$CFName\'";
-        &Print_Log (1, "$Msg ...") unless
-                $Check_Only or $Debug or !$opt_v ;
+        FH += 1  
+        if FH > CmdFileNestLmt :  Exit (999, "Cmd files nested too deep!")
+        if not os.path.exists(File) :
+                try: FH = open(File , 'r') 
+                except : Exit (2, "Can\'t open Cmd file %s" % File);
 
-        $FH++;
+        Line = 0
+        Done = 0
+        with open (File, r) as fh :
+                for line in fh:
+                        Comm = Comm_Current;   #HA Update our Port pointer, incase it changed
+                        if not (Check_Only and Line == 0) : Stats{'Status'} = 'Active' 
+                        if Check_Only and Line == 0) : Stats{'Status'} = 'Check' 
+                        if Line == 0 : Stats.Update_All
+                        Abort(check)
+                        if not Done : Line += 1    # Tags the last line used
+                        if Done : Print_Log (11, "Command Done") 
+                        if $Done : next 
+                        Log_Str = "%s - Line %s\n" % Msg, Line    # This should now get written to the Expect log
+                        chomp(line)
+                        line.rstring      # Remove any leading/trailing whitespace
+                        # s/^\s*(.*)\s*[\n|\r]$/$1/;     # Remove returns/linfeeds  JSW 020106 - Fix for returns/linefeed added to INC files
+                        if line.find(r"^\s*$") : next        # (now) null lines
+                        if line.find(r"^\#") : next          # Commented out
+                        if not Check_Only : Add_2_Flat_Cmd_File ("\t\t\t\t# %s%s\n" % Log_Str, line)
+                        p = re.compile(r"^\<(\w+)\>\s*(.*)$")  # Get the keyword
+                        val = p.findall(Arg)                         
+                        KeyWord = p[1].lower
+                        Raw_Arg_1 = Arg = p[2]
+                        Arg = Arg.translate(None,string.whitespace)  # Remove any white space
+                        Raw_Arg_2 = Arg;
+                        if Arg.find(r"^\$(.*)")  : Print2XLog ("Found Variable: %s = <%s>\n" % Arg, Arg %,1) 
+                        p = re.compile(r"<(\/.*)\>")  #</Loop> will not have matched above
+                        Keyword = p.findall(line)
+                        if  not Bypass :
+                                p = re.compile(r"/^\$(.*)\[(.*)\]\[(.*)\]->\{(.*)\}")
+                                val = p.findall(Arg)
+                                if Arg.find(r"^\$(.*)\[(.*)\]\[(.*)\]->\{(.*)\})") and  not Check_Only and not KeyWord.find("set$") :
+                                        {  # Array of Hash ex: $UUT_Variable_ref[0]->{Sahasera}
+                                        my $Arg_save = $Arg;
+                                        $Arg = ${$1}[$2][$3]->{$4};
+                                        &Print2XLog  ("Found 2way Variable List->HASH: $Arg_save = <$Arg>",1)
+                                } elsif (($Arg =~ /^\$(.*)\[(.*)\]->\{(.*)\}/) and !$Check_Only and !($KeyWord =~ /set$/)) {  # Array of Hash ex: $UUT_Variable_ref[0]->{Sahasera}
+                                        my $Arg_save = $Arg;
+                                         $Arg = ${$1}[$2]->{$3};
+                                         &Print2XLog  ("Found Variable List->HASH: $Arg_save = <$Arg>",1);
+                                } elsif ( $Arg =~ /^\$(.*)\[(.*)\]\[(.*)\]/ and !$Check_Only and !($KeyWord =~ /set$/)) {
+                                        my $Arg_save = $Arg;
+                                        $Arg = ${$1}[$2][$3];
+                                } elsif ( $Arg =~ /^\$(.*)\[(.*)\]/ and !$Check_Only and !($KeyWord =~ /set$/)) {
+                                        my $Arg_save = $Arg;
+                                        $Arg = ${$1}[$2];
+                                        &Print2XLog  ("Found Variable List-: $Arg_save = <$Arg>",1)
 
-        &Exit (999, "Cmd files nested too deep!")
-                if ($FH > $CmdFileNestLmt);
-
-        &Exit (2, "Cmd file $File not found") unless -s $File;
-        open ($FH, "<$File") || &Exit (2, "Can\'t open Cmd file $File");
-
-        my $Line = 0;
-        my $Done = 0;
-        while (<$FH>) {
-                $Comm = $Comm_Current;   #HA Update our Port pointer, incase it changed
-                $Stats{'Status'} = 'Active' unless ($Check_Only  && $Line eq 0);
-                $Stats{'Status'} = 'Check' if ($Check_Only && $Line eq 0);
-            &Stats::Update_All if $Line eq 0;
-        &Abort (check);
-
-        $Line++ unless $Done;   # Tags the last line used
-        &Print_Log (11, "Command Done") if $Done;
-        next if $Done;
-
-        $Log_Str = "$Msg - Line $Line\n";    # This should now get written to the Expect log
-
-        chomp;
-        s/^\s*(.*)\s*$/$1/;     # Remove any leading/trailing whitespace
-        s/^\s*(.*)\s*[\n|\r]$/$1/;     # Remove returns/linfeeds  JSW 020106 - Fix for returns/linefeed added to INC files
-
-        next if /^\s*$/;        # (now) null lines
-        next if /^\#/;          # Commented out
-
-        &Add_2_Flat_Cmd_File ("\t\t\t\t# $Log_Str$_\n") unless $Check_Only;
-        /^\<(\w+)\>\s*(.*)$/;
-        $KeyWord = lc $1;
-        $Arg = $2;
-        my $Raw_Arg_1 = $2;
-        $Arg =~ s/\s*[\"|\'](.*)[\"|\']\s*$/$1/;  #Modified by JW 031406, still some spaces getting through why?
-                     my $Raw_Arg_2 = $Arg;
-                     &Print2XLog  ("Found Variable: $Arg = <${$Arg}>\n",1) if $Arg =~ /^\$(.*)/ ;
-                     $KeyWord =~ s/\<(\/.*)\>/$1/;  #</Loop> will not have matched above
-                               # (because '/' is not matched by \w)!
-                  # v29 Why do this at all? The only place we want interpolation is alread done in the <INCLUDE> cmd
-        #      $Arg = $$1 if $Arg =~ /^\$(.*)/ # Change it to a pointer to the global
-        #                 and !$Check_Only
-                                       #                 and !($KeyWord =~ /set$/);
-                # Array of Hash ex: $UUT_Variable_ref[0]->{Sahasera}
-                  if  (! $Bypass) {
-                          if (($Arg =~ /^\$(.*)\[(.*)\]\[(.*)\]->\{(.*)\}/) and !$Check_Only and !($KeyWord =~ /set$/)) {  # Array of Hash ex: $UUT_Variable_ref[0]->{Sahasera}
-                                                                                                                           my $Arg_save = $Arg;
-                                                                                                                                   $Arg = ${$1}[$2][$3]->{$4};
-                                                                                                                           &Print2XLog  ("Found 2way Variable List->HASH: $Arg_save = <$Arg>",1)
-                                                                                                          } elsif (($Arg =~ /^\$(.*)\[(.*)\]->\{(.*)\}/) and !$Check_Only and !($KeyWord =~ /set$/)) {  # Array of Hash ex: $UUT_Variable_ref[0]->{Sahasera}
-                                                                                                         my $Arg_save = $Arg;
-                                                                                                         $Arg = ${$1}[$2]->{$3};
-                                                                                                         &Print2XLog  ("Found Variable List->HASH: $Arg_save = <$Arg>",1);
-                                                                                                       } elsif ( $Arg =~ /^\$(.*)\[(.*)\]\[(.*)\]/ and !$Check_Only and !($KeyWord =~ /set$/)) {
-                   my $Arg_save = $Arg;
-                   $Arg = ${$1}[$2][$3];
-                   } elsif ( $Arg =~ /^\$(.*)\[(.*)\]/ and !$Check_Only and !($KeyWord =~ /set$/)) {
-                       my $Arg_save = $Arg;
-                  $Arg = ${$1}[$2];
-                  &Print2XLog  ("Found Variable List-: $Arg_save = <$Arg>",1)
-
-                 &Print2XLog  ("Found 2 WAY Variable List-: $Arg_save = <$Arg>",1)
-          } elsif ( $Arg =~ /^\$(.*)/ and !$Check_Only and !($KeyWord =~ /set$/) and !($Arg =~ /^\$\{(.*)\}/)) {
-                  $Arg = $$1 ;
-                  &Print2XLog  ("Found Variable: <$$Arg> = $Arg, Raw: $Raw_Arg_1 : $Raw_Arg_2 : $_ ",1)
-                  } elsif ($Arg =~ /\$w+/) {
-                         &Print2XLog  ("Warning: Found Possible Variable in : $Arg") ;
-                  } elsif ($Arg =~ /\[(.*)\]{3,}/) {
-                          &Print2XLog  ("Warning: Found Possible Variable dimension too deep : $Arg") ;
-                  }
-                  }
+                                        &Print2XLog  ("Found 2 WAY Variable List-: $Arg_save = <$Arg>",1)
+                                } elsif ( $Arg =~ /^\$(.*)/ and !$Check_Only and !($KeyWord =~ /set$/) and !($Arg =~ /^\$\{(.*)\}/)) {
+                                                $Arg = $$1 ;
+                                                &Print2XLog  ("Found Variable: <$$Arg> = $Arg, Raw: $Raw_Arg_1 : $Raw_Arg_2 : $_ ",1)
+                                } elsif ($Arg =~ /\$w+/) {
+                                        &Print2XLog  ("Warning: Found Possible Variable in : $Arg") ;
+                                } elsif ($Arg =~ /\[(.*)\]{3,}/) {
+                                        &Print2XLog  ("Warning: Found Possible Variable dimension too deep : $Arg") ;
+                                } 
+                                else
+                                
+                        }
+                        else
+                
                   &Tag ($Cached,"Reading $CFName line $Line\: $KeyWord=$Arg") unless $Check_Only;
 
-#Stoke!        unless ($KeyWord =~ /ctrl-\w?|end|wait|send|\/loop|getdata/) {
-unless ($KeyWord =~ /ctrl-\w?|end|wait|send|\/loop|\/bypass|getdata/) {
+                  #Stoke!        unless ($KeyWord =~ /ctrl-\w?|end|wait|send|\/loop|getdata/) {
+                  unless ($KeyWord =~ /ctrl-\w?|end|wait|send|\/loop|\/bypass|getdata/) {
 
-        # check to make sure $Arg is valid
-        $Erc = 25;
-        &Exit (2, "Null $Raw_Arg_1,$Raw_Arg_2,$Arg_save Arg at $CFName line $Line: Cmd=\'$KeyWord\': Arg=\'$Arg\'") if $Arg eq '';
-                $Erc = 0;
-}
+                          # check to make sure $Arg is valid
+                          $Erc = 25;
+                          &Exit (2, "Null $Raw_Arg_1,$Raw_Arg_2,$Arg_save Arg at $CFName line $Line: Cmd=\'$KeyWord\': Arg=\'$Arg\'") if $Arg eq '';
+                          $Erc = 0;
+} #end while
 
 
 
-if ($Check_Only or ! $Caching or  ($KeyWord =~ /include/)  ) {
+        if ($Check_Only or ! $Caching or  ($KeyWord =~ /include/)  ) {
         if (  ! $Bypass  or ($KeyWord eq '/bypass')) {    # see if we are bypassing any code or ending bypass
                                                           $Done = &Exec_Cmd ($Comm, $CFName, $Line, $KeyWord, $Arg, $Check_Only, 0);
                                                                   } else {

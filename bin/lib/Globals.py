@@ -169,7 +169,9 @@ global Globals; Globals = {   # Globals Dictionary will use to replace perl stri
             "Power_Switch2_IP" : 0,
             "Stats_Path"      : 21,
             "UUT_IP_Base"     : 21,
-            "UUT_IP_Range"    : 21
+            "UUT_IP_Range"    : 21,
+            "User"            :21,
+            "PW"            :21,
             }
 global Menu_List;Menu_List = {};
 global Menu_Desc;Menu_Desc = {};
