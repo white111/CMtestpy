@@ -25,7 +25,9 @@
 ################################################################################
 VER= 'v0.1 5/9/2017'; # Conversion to Python from Perl 050917 JSW
 CVS_VER = ' [ CVS: $Id: Logs.pm,v 1.10 2011/01/21 18:38:56 joe Exp $ ]';
-CMtestVersionn['cmtest'] = VER + CVS_VER
+global CMtestVersion; 
+if not "CMtestVersion" in globals() : CMtestVersion={}
+CMtestVersion['cmtest'] = VER + CVS_VER
 
 import platform
 import sys
@@ -48,6 +50,7 @@ import Mav
 import Power
 import Util
 import GUI
+import sys, traceback  # catch keyboard interupt
 
 #__________________________________________________________________________
 def main():
@@ -67,7 +70,9 @@ def main():
     global SessionForce
     global CMPipe; CMPipe=os.getenv('CmTest_Release_Pipe', "No_Pipe") 
     global UserID
-    
+    global Out_File
+    global shucks; shucks = 0
+
     #Get input from command line
     usage = "usage: %prog session#"
     parser = OptionParser(usage)
@@ -82,7 +87,9 @@ def main():
     parser.add_option("-F", "--Force", dest="Force", type="int", default=0,
                       help="Force Session #")
     parser.add_option("-U", "--User", dest="User", default="None",
-                      help="Set User ID")    
+                      help="Set User ID")
+    parser.add_option("-O", "--Output", dest="Output", default=r"cmtest.xml",
+                      help="Set Output XML file, will default to tmp/cmtest.xml")       
     (options, args) = parser.parse_args()
     #if not options.Session :
         #parser.error("-s session# required")
@@ -92,6 +99,7 @@ def main():
     Session = options.session
     SessionForce = options.Force
     UserID = options.User
+    Out_File = options.Output
 
     OS = os.name
     if os.name == "nt":
@@ -118,16 +126,25 @@ def main():
     else :
         Cfg_File = r'/usr/local/cmtest/testctrl.cfg'
         Tmp = os.getenv(expanduser("~") + "/tmp", "NO_TMP")
- 
+
 
     CmdFilePath = r"../" + PPath +r"/cmdfiles"
 
     Logs.ASCIIColor('reset')
+
     _Init()
     GUI = 0
     # uneeded Perl &GUI_Init if $GUI;
     Quiet = 0;  # Don't allow since we only have a char menu right now
-    Menu_main()  # Bring up menu and start excution
+    shucks = 0
+    try:
+        Menu_main()  # Bring up menu and start excution
+    except KeyboardInterrupt:
+        print( "Shutdown requested...exiting")
+        _catch_zap()
+    except Exception:
+        traceback.print_exc(file=sys.stdout)
+        sys.exit(0)
 
     if not Quiet : print("done\n") 
     Exit (0)
@@ -138,28 +155,35 @@ def _Init():
     global Linux_gbl
     global Erc
     global Force
-    os.name.
+    
     Linux_gbl = 'Ubuntu';  # Added 3/4/10 to support Ubuntu install
     try:
         with open ("/etc/*release", r) as fh :
             for line in fh:    
-		if re.search(r"Ubuntu", line) : Linux_gbl = 'Ubuntu'
-		elif re.search(r"Fedora", line) : Linux_gbl = 'Fedora'
-		elif re.search(r"CentOS", line) : Linux_gbl = 'CentOS'
-		else : 
-		    Linux_gbl = 'unknown';
-		    print ("Un-suported linux type found, I am going to die now")
-		    exit()
+                if re.search(r"Ubuntu", line) : Linux_gbl = 'Ubuntu'
+                elif re.search(r"Fedora", line) : Linux_gbl = 'Fedora'
+                elif re.search(r"CentOS", line) : Linux_gbl = 'CentOS'
+                else : 
+                    Linux_gbl = 'unknown';
+                    print ("Un-suported linux type found, I am going to die now")
+                    exit()
     except:
-	print ("Un-suported linux type found, are we Windows? I am going to die now")
-	exit()	
-    
+        print ("Un-suported linux type found, are we Windows? I am going to die now")
+        exit()	
+
     Init_All (0)
     Erc = 101
     Force = options.Force
     Erc = 0
     Init_Also (0)
     return
+#____________________________________________________________________________________
+def _catch_zap(): 
+    global shucks; shucks +=1
+    Power ('OFF');
+    Stats['Status'] = 'Aborted';
+    Exit(998,"<Ctrl>-C Aborted");
+
 #____________________________________________________________________________________
 
 if __name__ == "__main__":

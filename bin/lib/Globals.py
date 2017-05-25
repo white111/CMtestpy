@@ -25,8 +25,10 @@
 #
 ################################################################################
 VER= 'v0.1 5/4/2017'; #Conversion to Python
-CVS_VER = ' [ CVS: $Id: Globals.pm,v 1.9 2011/12/12 22:54:28 joe Exp $ ]';
-#CMtestVersion['Globals'] = VER + CVS_VER;
+CVS_VER = ' [ Git: $Id$ ]'
+global CMtestVersion
+if "CMtestVersion" not in globals() : CMtestVersion={}
+CMtestVersion['Globals'] = VER + CVS_VER;
 #______________________________________________________________________________
 
 import sys    #Added for Ubuntu 9.10 support should work with Fedora
@@ -176,6 +178,13 @@ global GP_Path; GP_Path ="none"
 
 global Util_only;  Util_only = 0
 global UserID; UserID = "none"
+global Out_File; Out_File = "" # optional -O ouput xml file
+
+# from Connect
+global Loop_Time;Loop_Time       = 0;        # ATT inside of the loop cycle
+global LBuffer;LBuffer         = ();       # Loop buff
+global Caching; Caching         = 0;        # Set by a <Loop> cmd, unset by </Loop>
+#    our $Retry_Count     = 0;        # Set by a <Retry> cmd, unset by </Retry>
 
 print ("Globals init .. Done")
 

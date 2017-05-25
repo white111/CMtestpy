@@ -25,8 +25,10 @@
 #
 ################################################################################
 VER= 'v0.1 5/9/2017'; # Conversion to Python from Perl 050917 JSW
-CVS_VER = ' [ CVS: $Id: Logs.pm,v 1.10 2011/01/21 18:38:56 joe Exp $ ]';
-CMtestVersionn['Logs'] = VER + CVS_VER
+CVS_VER = ' [ CVS: $Id$ ]';
+global CMtestVersion
+if "CMtestVersion" not in globals() : CMtestVersion={}
+CMtestVersion['Logs'] = VER + CVS_VER
 #_____________________________________________________________________________
 import os.path
 from os import listdir
@@ -50,35 +52,35 @@ def Arc_Logs (Path, Label) :
      Arc_File
 
      if os.name == 'NT' : 
-	  Move = 'ren'
-	  Delete = 'del'
+          Move = 'ren'
+          Delete = 'del'
 
      Dir_list = os.listdir(Path)
      for index in Dir_list :
-	  Arc_File = re.sub(r"/2arc2(.*)/", r"\1", index)
-	  if ( Arc_File ) :
-	       if Debug : print("Removing %s" ,index)
-	       os.path.join(r,index);
-	       break;
+          Arc_File = re.sub(r"/2arc2(.*)/", r"\1", index)
+          if ( Arc_File ) :
+               if Debug : print("Removing %s" ,index)
+               os.path.join(r,index);
+               break;
 
      File_Count = File_List(Path, 1); # Don't recurse any subs
      if not File_Count : return 
 
      if Arc_File == '' :
-	  # Perl Arc_File = $^T - ( ( -C $File_List[0] ) * 3600 * 24 ); # Ptyton commented does not appered to be used
-	  Arc_File = Label + "\_" + PT_Date( Arc_File, 2 )
-	  Arc_File = re.sub(r"\s","_", Arc_File)
-	  Arc_File = re.sub(r"[\/\:]","-", Arc_File)
-     }
+          # Perl Arc_File = $^T - ( ( -C $File_List[0] ) * 3600 * 24 ); # Ptyton commented does not appered to be used
+          Arc_File = Label + "\_" + PT_Date( Arc_File, 2 )
+          Arc_File = re.sub(r"\s","_", Arc_File)
+          Arc_File = re.sub(r"[\/\:]","-", Arc_File)
+
      Arc_File = Path+ r"/" + Arc_File
 
      os.makedirs(Arc_File)
 
      for index in File_List :
-	  Erc = os.rename(index, Arc_File)
-	  
-     if Erc : Exit (999,"Arc_Logs returned a " Erc)
-     
+          Erc = os.rename(index, Arc_File)
+
+     if Erc : Exit (999,"Arc_Logs returned a %s" % Erc)
+
      return
 #__________________________________________________________________________
 def Get_Cfg_Recs(Date, Location, HostID, Parent_ID, SN_Masks):
@@ -89,47 +91,47 @@ def Get_Cfg_Recs(Date, Location, HostID, Parent_ID, SN_Masks):
      Rec = [];
      Buf = ''
 
-     PrintLog ("Get_Cfg_Recs: Date=" + Date", Location=", Location", HostID=", HostID", Parent_ID=", Parent_ID,1);
+     PrintLog ("Get_Cfg_Recs: Date=%s, Location=%s, HostID=%s, Parent_ID=%s" % Date,Location,HostID,Parent_ID %  1);
      Last_Rec = []
      Last_Rec = gBuf[0].split(r";");
      if Date < Last_Rec[1] : 
-	  return;  # The date we want is earlier than the last record read,
-                 #   so don't bother with any more
+          return;  # The date we want is earlier than the last record read,
+                    #   so don't bother with any more
      Done = 0
      while (not Done) :
-	   # <CFG>  # perl had <CFG> barewood file handel that is open 
-	  ###################### Stop ###########################
-	  CFG_line = CFG.readline().rstrip; # Read and chomp return
+               # <CFG>  # perl had <CFG> barewood file handel that is open 
+          ###################### Stop ###########################
+          CFG_line = CFG.readline().rstrip; # Read and chomp return
           CFG_Line_num = CFG.tell() # get the file line postion
-	  
-	  PrintLog ("Read CfgLog line: " + CFG_Line_num , 1);
-	  Done = 1 if CFG_line = None
-	  Buf = CFG_line ;          # Save it in case we overrun the date (-> gBuf[0])
-	  Rec  = split( ";", CFG_line) 	    # Split the records on ;
-	  if Rec[0] != 2 and not Done :
-	       Exit(999, "Unrecognized file format for CFG record line: " + CFG_Line_num);
-	  elif Rec[1] < Date) :   # Cfg rec is too early
-	       next;                     # Skip
-	  elif Rec[1] > Date :   # Too late, we'll stop with this record
-	       Done = 1               #  still loaded in gBuf[0]
-	  else :
-	       gBuf.append( CFG_Line)
-	       PrintLog (CFG_Line, 1);
 
-	       #0: $Type, 1: $Date, 2: $Location, $HostID, $OpID, $Parent_ID, $Slot, $PN, $SN)
-       
+          PrintLog ("Read CfgLog line: " + CFG_Line_num , 1);
+          if CFG_line == None : Done = 1 
+          Buf = CFG_line ;          # Save it in case we overrun the date (-> gBuf[0])
+          Rec  = split( ";", CFG_line) 	    # Split the records on ;
+          if Rec[0] != 2 and not Done :
+               Exit(999, "Unrecognized file format for CFG record line: " + CFG_Line_num);
+          elif Rec[1] < Date :   # Cfg rec is too early
+               next;                     # Skip
+          elif Rec[1] > Date :   # Too late, we'll stop with this record
+               Done = 1               #  still loaded in gBuf[0]
+          else :
+               gBuf.append( CFG_Line)
+               PrintLog (CFG_Line, 1);
+
+               #0: $Type, 1: $Date, 2: $Location, $HostID, $OpID, $Parent_ID, $Slot, $PN, $SN)
+
      Msg = ''
      for index in gBuf :
-	  Rec  = split(";", index)
-	  SNum = Rec[8]
-	  if SN_Masks == 0 :
-	       SN_Match = SN_Masks # Assume a match if no mask list provided
-	  
-	  if Debug : PrintLog("SN_Match[0]=" + SN_Match,1) 
-	  for index2 in SN_Masks : 
-	       if re(r"^"+ index2, SNum ) : SN_Match = 1 
+          Rec  = split(";", index)
+          SNum = Rec[8]
+          if SN_Masks == 0 :
+               SN_Match = SN_Masks # Assume a match if no mask list provided
 
-	  if Debug : PrintLog("SN_Match[1]=" +SN_Match,1)
+          if Debug : PrintLog("SN_Match[0]=" + SN_Match,1) 
+          for index2 in SN_Masks : 
+               if re(r"^"+ index2, SNum ) : SN_Match = 1 
+
+          if Debug : PrintLog("SN_Match[1]=" +SN_Match,1)
 
 #        #!!! Still in debug ...
 #        foreach ( @Exclude ) {
@@ -137,17 +139,17 @@ def Get_Cfg_Recs(Date, Location, HostID, Parent_ID, SN_Masks):
 #        }
 #        &PrintLog("SN_Match[2]=$SN_Match",1) if $Debug;
 
-	  if ((Rec[2] == Location)   and
-	      (Rec[3] == HostID)     and
-	      (Rec[5] == Parent_ID)) :
-	       #  and
-	       # ($SN_Match)){
+          if ((Rec[2] == Location)   and
+              (Rec[3] == HostID)     and
+              (Rec[5] == Parent_ID)) :
+               #  and
+               # ($SN_Match)){
 
-	       Msg += ', ' + SNum;
-	       Cfg_Recs.appen(SNum)
-	       
-        #, $Date, $Location, $HostID, $OpID, $Parent_ID, $Slot, $PN, $SN)
-    
+               Msg += ', ' + SNum;
+               Cfg_Recs.appen(SNum)
+
+          #, $Date, $Location, $HostID, $OpID, $Parent_ID, $Slot, $PN, $SN)
+
      PrintLog("Returned: " + Msg, 1);
 
      gBuf = Buf        # Just the last one
@@ -166,11 +168,11 @@ def Log_Cfg(OpID, Sys_ID, Slot, PN, SN):
      File = LogPath + r"/" + Cfg.log
 
      try  :
-	  OUT = open(File, 'r+')
-	  OUT.write("2;"+Stats['TimeStamp']+r";"+Location+r";"\
-	            +Host_ID+r";"+Op_ID+r";"+Sys_ID+r";"+Slot+r";"+PN+r";"+SN+";\n")
+          OUT = open(File, 'r+')
+          OUT.write("2;"+Stats['TimeStamp']+r";"+Location+r";"\
+                    +Host_ID+r";"+Op_ID+r";"+Sys_ID+r";"+Slot+r";"+PN+r";"+SN+";\n")
      finally:
-	  Exit (1, File) 
+          Exit (1, File) 
 
      File_Close (OUT);
      return
@@ -186,12 +188,12 @@ def Log_Cfg_Record(OpID, Sys_ID, Slot, PN, SN):
 
      File = Tmp + r"/"+ Cfg.log           # Send to $tmp dir so we can email or export record
      try :
-	  OUT = open(File, 'r+')  
-	  OUT.write("2;"+Stats['TimeStamp']+r";"+Location+r";"\
-	               +Host_ID+r";"+Op_ID+r";"+Sys_ID+r";"+Slot+r";"+PN+r";"+SN+";\n")
+          OUT = open(File, 'r+')  
+          OUT.write("2;"+Stats['TimeStamp']+r";"+Location+r";"\
+                    +Host_ID+r";"+Op_ID+r";"+Sys_ID+r";"+Slot+r";"+PN+r";"+SN+";\n")
      finally:
-	  Exit (1, File) 
-	  
+          Exit (1, File) 
+
      File_Close (OUT);
      return
 #__________________________________________________________________________
@@ -199,20 +201,21 @@ def ASCIIColor(color='default'):
      "Change the Ascii color if possible green:red:bold default no color"
      attr = []
      try: 
-	  sys.stdout.isatty()
-	  if color == "green" :
-	       # green
-	       attr.append('32')
-	  elif color == "red":
-	       # red
-	       attr.append('31')
-	  elif color == "bold":
-	       attr.append('1')
-	  else :
-	       attr.append('0') # no color?
-     
-     print ( '\x1b[%sm%s\x1b[0m' % (';'.join(attr)))	  
-	  
+          sys.stdout.isatty()
+          if color == "green" :
+               # green
+               attr.append('32')
+          elif color == "red":
+               # red
+               attr.append('31')
+          elif color == "bold":
+               attr.append('1')
+          else :
+               attr.append('0') # no color?
+     except: pass
+
+     print ( '\x1b[%sm' % ( ';'.join(attr) )  )
+
      return
 #__________________________________________________________________________
 def Log_Error(Msg):
@@ -225,7 +228,7 @@ def Log_Error(Msg):
      Stats['Result'] = 'FAIL';
 
      if TestData['TTF'] == '': # Only the first time
-	  TestData['TTF'] = TestData['TOLF'] - Stats['TimeStamp']
+          TestData['TTF'] = TestData['TOLF'] - Stats['TimeStamp']
 
      Stats.Update_All;
      ASCIIColor('red') 
@@ -236,18 +239,18 @@ def Log_Error(Msg):
      Print_Out_XML_Tag();
      ASCIIColor('reset');
      if (Exit_On_Error) :
-	  Exit_On_Error_Count--;
-	  # THis must be Erc=0 to avoid dancing forever with $Exit
-	  #&Exit (0, "Exit_On_Error") if $Exit_On_Error_Count < 1;
-	  if (Exit_On_Error_Count < 1) :  # if Error count reached Exit
-	       Print_Log (2, 'Exit on too Many Errors ');
-	       #&Exit (0, "Exit_On_Error");
-	       Final()
+          Exit_On_Error_Count -= 1
+          # THis must be Erc=0 to avoid dancing forever with $Exit
+          #&Exit (0, "Exit_On_Error") if $Exit_On_Error_Count < 1;
+          if (Exit_On_Error_Count < 1) :  # if Error count reached Exit
+               Print_Log (2, 'Exit on too Many Errors ');
+               #&Exit (0, "Exit_On_Error");
+               Final()
 
      return (0);
 
 #__________________________________________________________________________________
-def Log_Event(OpID, PN, SN, TID, Result, $Ptr):
+def Log_Event(OpID, PN, SN, TID, Result, Ptr):
      " Write a test event record to LogPath"
 
      # Note that, as of 05/12/02 the Data list is no longer passed as an arg
@@ -265,21 +268,21 @@ def Log_Event(OpID, PN, SN, TID, Result, $Ptr):
 
      File = LogPath+r"/" + Event.log
      for Key in TestData :	   
-	  if TestData[Key] != '': Data += Key + r"=" + TestData[Key]
-                        
+          if TestData[Key] != '': Data += Key + r"=" + TestData[Key]
+
      Data = Data[:-1] # Chomp last character
      try :
-	  OUT = open(File, 'r+')  
-	  OUT.write("1;"+Stats['TimeStamp']+r";"+Location+r";"\
-	               +Host_ID+r";"+Op_ID+r";"+PN+r";"+SN+r";"+TID\
-	               +r";"+Result+r";"+Data+r";",Ptr+";\n")
+          OUT = open(File, 'r+')  
+          OUT.write("1;"+Stats['TimeStamp']+r";"+Location+r";"\
+                    +Host_ID+r";"+Op_ID+r";"+PN+r";"+SN+r";"+TID\
+                       +r";"+Result+r";"+Data+r";",Ptr+";\n")
      finally:
-	  Exit (1, File) 
-	  
+          Exit (1, File) 
+
      File_Close (OUT);
      return
 #__________________________________________________________________________________
-def Log_Event_Record($OpID, $PN, $SN, $TID, $Result, $Ptr):
+def Log_Event_Record(OpID, PN, SN, TID, Result, Ptr):
      "Write a test event record to tmp path"
 
      # Note that, as of 05/12/02 the Data list is no longer passed as an arg
@@ -293,28 +296,28 @@ def Log_Event_Record($OpID, $PN, $SN, $TID, $Result, $Ptr):
      TID.replace(r";",r",")  # Convert any ';' -> ',' (field separator!)
      Result.replace(r";",r",")  # Convert any ';' -> ',' (field separator!)
      Ptr.replace(r";",r",")  # Convert any ';' -> ',' (field separator!)
-     
+
      #        my ($OpID, $PN, $SN, $TID, $Result, $Data, $Ptr) = @Args; ->05/12/02
 
-        # (NB $TimeStamp, $Location, $Host_ID and $Op_ID are global, declared in &Init_All)
+          # (NB $TimeStamp, $Location, $Host_ID and $Op_ID are global, declared in &Init_All)
 
      File = Tmp + r"/" + Event.log
      for Key in TestData :	   
-	  if TestData[Key] != '': Data += Key + r"=" + TestData[Key]
-			   
+          if TestData[Key] != '': Data += Key + r"=" + TestData[Key]
+
      Data = Data[:-1] # Chomp last character
      try :
-	  OUT = open(File, 'r+')  
-	  OUT.write("1;"+Stats['TimeStamp']+r";"+Location+r";"\
-	            +Host_ID+r";"+Op_ID+r";"+PN+r";"+SN+r";"+TID\
-	            +r";"+Result+r";"+Data+r";",Ptr+";\n")
+          OUT = open(File, 'r+')  
+          OUT.write("1;"+Stats['TimeStamp']+r";"+Location+r";"\
+                    +Host_ID+r";"+Op_ID+r";"+PN+r";"+SN+r";"+TID\
+                    +r";"+Result+r";"+Data+r";",Ptr+";\n")
      finally:
-	  Exit (1, File) 
-	     
+          Exit (1, File) 
+
      File_Close (OUT);
      return
-        
- #__________________________________________________________________________________
+
+     #__________________________________________________________________________________
 
 def Log_History(Type):
      "Log script start / end activity "
@@ -326,24 +329,24 @@ def Log_History(Type):
      Msg += "\t"
 
      if LogPath == '' : sys.exit( LogPath+" not defined in: "+Logs.Log_History)
-                
-    #perl  SWITCH: {Why needed ? in a loop see perl last 
+
+     #perl  SWITCH: {Why needed ? in a loop see perl last 
      if Type == 1 :
-	  Msg += "Starting $Main ... "   #; last SWITCH; }
+          Msg += "Starting $Main ... "   #; last SWITCH; }
      elif Type == 2 :
-	  Msg += "Ending $Main" # ;                last SWITCH; }
+          Msg += "Ending $Main" # ;                last SWITCH; }
      else:
-	  Exit(999, '(Invalid call to Log_History)')
-        
+          Exit(999, '(Invalid call to Log_History)')
+
 
      # This next one needs to be a 'die' since &Exit will &Log_History!
      try :
-	  LOG = open(LogFile, 'r+')  
-	  LOG.write(Msg+r"\n")
-	  LOG.close()
+          LOG = open(LogFile, 'r+')  
+          LOG.write(Msg+r"\n")
+          LOG.close()
      finally:
-	  sys.exit("Can\'t open History file: " + LogFile )
-     
+          sys.exit("Can\'t open History file: " + LogFile )
+
      return (0);
 #________________________________________________________________________________________
 def Log_MAC(Product_ID, MAC_Addr):
@@ -358,23 +361,23 @@ def Log_MAC(Product_ID, MAC_Addr):
 
      File = LogPath+r"/"+MAC.log
      try :
-	  IN = open(File, 'r')  
+          IN = open(File, 'r')  
      finally: 
-	  Exit (1, "Can\'t open "+File+" for read") 
+          Exit (1, "Can\'t open "+File+" for read") 
 
      Found = 0
      for line in IN:
-	  line = line[:-1] # Chomp last character
-	  linesplit=line.split(r";")
-	  Type = linesplit[0]
-	  Date = linesplit[1]
-	  Prod_ID = linesplit[2]
-	  MAC = linesplit[3]
+          line = line[:-1] # Chomp last character
+          linesplit=line.split(r";")
+          Type = linesplit[0]
+          Date = linesplit[1]
+          Prod_ID = linesplit[2]
+          MAC = linesplit[3]
           if MAC == MAC_Addr :
-	       Found = 1;
-	       if Prod_ID != Product_ID :
-		    #my $orig_date  = &PT_Date($Date, 7);
-		    return (3, "MAC "+MAC+" already assigned to: "+Prod_ID)
+               Found = 1;
+               if Prod_ID != Product_ID :
+                    #my $orig_date  = &PT_Date($Date, 7);
+                    return (3, "MAC "+MAC+" already assigned to: "+Prod_ID)
 
      IN.close()
      if Found : return (0)
@@ -388,19 +391,19 @@ def Log_MAC(Product_ID, MAC_Addr):
      #    chop $Data;
 
      try :
-	  OUT = open(File, 'r+')  
+          OUT = open(File, 'r+')  
      finally: 
-	  Exit (1, "Can\'t open "+File+" for append") 
+          Exit (1, "Can\'t open "+File+" for append") 
 
      # do not see the point not converting to python Time = (defined $Stats{'TimeStamp'}) ? $Stats{'TimeStamp'} : time;
      Stats['TimeStamp'] = int(time.time()) #epoch time
-     
+
      OUT.write("4;"+Time+";"+Product_ID+";"+MAC_Add+r"\n")
-     
+
      File_Close (OUT);
 
      return (0);
-  #________________________________________________________________________________________
+     #________________________________________________________________________________________
 def Log_MAC_Record(Product_ID, MAC_Addr):
      "First checks to make sure this MAC address has not been used before \
       then cats a new record to MAC.log in LogPath\
@@ -414,23 +417,23 @@ def Log_MAC_Record(Product_ID, MAC_Addr):
 
      File = LogPath+r"/"+MAC.log
      try :
-	  IN = open(File, 'r')  
+          IN = open(File, 'r')  
      finally: 
-	  Exit (1, "Can\'t open "+File+" for read") 
+          Exit (1, "Can\'t open "+File+" for read") 
 
      Found = 0
      for line in IN:
-	  line = line[:-1] # Chomp last character
-	  linesplit=line.split(r";")
-	  Type = linesplit[0]
-	  Date = linesplit[1]
-	  Prod_ID = linesplit[2]
-	  MAC = linesplit[3]
+          line = line[:-1] # Chomp last character
+          linesplit=line.split(r";")
+          Type = linesplit[0]
+          Date = linesplit[1]
+          Prod_ID = linesplit[2]
+          MAC = linesplit[3]
           if MAC == MAC_Addr :
-	       Found = 1;
-	       if Prod_ID != Product_ID :
-		    #my $orig_date  = &PT_Date($Date, 7);
-		    return (3, "MAC "+MAC+" already assigned to: "+Prod_ID)
+               Found = 1;
+               if Prod_ID != Product_ID :
+                    #my $orig_date  = &PT_Date($Date, 7);
+                    return (3, "MAC "+MAC+" already assigned to: "+Prod_ID)
 
      IN.close()
      if Found : return (0)
@@ -444,15 +447,15 @@ def Log_MAC_Record(Product_ID, MAC_Addr):
      #    chop $Data;
 
      try :
-	  OUT = open(File, 'r+')  
+          OUT = open(File, 'r+')  
      finally: 
-	  Exit (1, "Can\'t open "+File+" for append") 
+          Exit (1, "Can\'t open "+File+" for append") 
 
      # do not see the point not converting to python Time = (defined $Stats{'TimeStamp'}) ? $Stats{'TimeStamp'} : time;
      Stats['TimeStamp'] = int(time.time()) #epoch time
-     
+
      OUT.write("4;"+Time+";"+Product_ID+";"+MAC_Add+r"\n")
-     
+
      File_Close (OUT);
 
      return (0);
@@ -464,33 +467,33 @@ def Print2XLog(Msg, DontPrint2Screen, NoNewLine, TagAsError):
      MSG.readline().rstrip  # chomp return to make sure we do not have two
      # perl not converting  see if needed  or fix my $EOL_Ch = ($NoNewLine) ? '' : "\n";
      EOL_Ch = r"\n"
-     if not Quiet or not DontPrint2Screen : print(Msg + $EOL_Ch) 
-     my $Run_Time = tv_interval $Start_Time;  # Also at PT2.pm
+     if not Quiet or not DontPrint2Screen : print(Msg + EOL_Ch) 
+     Run_Time = Start_Time  # Also at PT2.pm
 
      # Tagging the date after so many minutes DOES NOT WORK (yet)
      ReDate = 2; # Time stamp every $ReDate sec
      Last_Log_Interval = int(time.time()) - Last_Log_Time; #epoch time
      if TagAsError :
-	  Tag = "ERR " + Erc+ ":"
+          Tag = "ERR " + Erc+ ":"
      else:
-	  Tag = '   '
+          Tag = '   '
      if Last_Log_Interval > ReDate : TimeField = PT_Date(int(time.time()), 2) 
      else: "\t" + print("%.3f", Run_Time)
- 
+
      if Msg.lower.startswith("done") : return (0) 
 
      if not New_Log : #!!! Required for Win32 - otherwise really slow! (Opened in Yield.pl)
-	  try :
-	       LOG = open(Xlog, 'r+') 
-	       return (3)
-	  finally: 
-	       Exit (1, "Can\'t open "+LOG+" for append")          
-	       
+          try :
+               LOG = open(Xlog, 'r+') 
+               return (3)
+          finally: 
+               Exit (1, "Can\'t open "+LOG+" for append")          
+
      LOG.write(TimeField+":\t"+Tag+"\t"+Msg+"\n")
      if not New_Log :
-	  LOG.close
+          LOG.close
 
-     
+
      Last_Log_Time = int(time.time()) #epoch time
 
      return (0);
@@ -505,16 +508,16 @@ def Print_Log(Mode, Msg):
 
      RC = Print2XLog(Msg, DontPrint2Screen, 0, TagAsError);
 
-    return (RC)
+     return (RC)
 #__________________________________________________________________________________
 def Print_Out(Msg):
      "Print a line to the output file Out_File"
 
      try :
-	  Out_File = open(fh, 'r+')   
+          Out_File = open(fh, 'r+')   
      finally: 
-	  return (3)
-   
+          return (3)
+
      fh.write(Msg)
      fh.close
 
@@ -525,9 +528,9 @@ def Print_Out_XML_Tag(Tag):
      "Add XML Tags"
 
      if Tag == '' :                 # It's an end tag - pop it off the stack
-	  Tag = '/' + XML_Tags.pop()
+          Tag = '/' + XML_Tags.pop()
      else :                   
-	  XML_Tags.append(Tag) #!!! may want to do a split of any attribute later...
+          XML_Tags.append(Tag) #!!! may want to do a split of any attribute later...
 
      RC = Print_Out("r\<"+Tag+r"\>"+"\n");
      return
@@ -551,22 +554,22 @@ def Rotate_Log(LogFile, Count):
      Ext = fnstrip(LogFile,8)
 
      while (Count) :
-	  To = PFN+r"\."+Count+r"\."+Ext
-	  Count -= 1
-	  From   = PFN+r"\."+Count+r"\."+Ext
-	  try:
-	       os.rename(From, To)
-	  finally:
-	       print ("Failed to move: " + From + " To: " + To )
-	       
-	       
+          To = PFN+r"\."+Count+r"\."+Ext
+          Count -= 1
+          From   = PFN+r"\."+Count+r"\."+Ext
+          try:
+               os.rename(From, To)
+          finally:
+               print ("Failed to move: " + From + " To: " + To )
+
+
      # This will only work if the logfile hasn't been opened yet!
-     
+
      try:
-	  os.rename(LogFile, From)
+          os.rename(LogFile, From)
      finally:
-	  print ("Failed to move LogFile: " + LogFile + " To: " + From )     
- 
+          print ("Failed to move LogFile: " + LogFile + " To: " + From )     
+
      # $From still contains the ...0.log
 
      if Erc : Exit (Erc,'') 
