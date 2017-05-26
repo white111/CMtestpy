@@ -16,6 +16,7 @@
 # Still ToDo:
 #              - Move breaks from main loop to after the stats update
 #              - Change <Include> to &   eg &Power
+#              - Conver pipe (comm, telnet ssh ets from perl to Python(still learning)
 #
 # License:   This software is subject to and may be distributed under the
 #            terms of the GNU General Public License as described in the
@@ -35,15 +36,15 @@ CMtestVersion['Connect'] = VER + CVS_VER
 #_______________________________________________________________________________
 #use Device;
 
-import lib.Expect
-import lib.GUI
-import lib.Logs
+#import GUI - Not used yet
+import Logs
 import time
 import os.path
 import pexpect #non standard library requires pip install pexpect before use, expect for python
 import pexpect.fdpexpect
-import serial
+import serial # non standard lib from pip install pyserial
 import string
+import pty # needed for pexpect, does not work on windows(no sudo termianl)
 
 #__________________________________________________________________________
 def Alert(Msg):
@@ -81,7 +82,7 @@ def Cmd_Expect(ConType, Port, File):
         #!!! Port is now pre-determined so we can lose this arg.
 
         Sess = Stats['Session']
-        if os.path.exists(File) : Exit (27, "Can\'t find Cmd file %s" %$File) 
+        if os.path.exists(File) : Exit (27, "Can\'t find Cmd file %s" %File) 
 
         KeyWord, Arg = ""
         ConExec, ExitCmd = ""
@@ -117,7 +118,6 @@ def Cmd_Expect(ConType, Port, File):
 
         Tag (Cached,"Closing spawned connection ...")
         soft_close(Comm )
-}
 #__________________________________________________________________________
 def Dump_Expect_Data(Data):
         "Dump our expect buffer"
@@ -163,8 +163,8 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
 
         global Stats
         global TimeOut
-        my Done = ""
-        my Arg0 = ''
+        Done = ""
+        Arg0 = ''
 
         #   \/  - - - - - - - - - white space(s) (indentation) allowed
         #                    \/ - white space(s) required
@@ -215,7 +215,8 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
                 "<Ask>    - Type, Var, Prompt Prompt the operator and wait for a <return>"
         elif KeyWord == 'ask' :
                 if Check_Only: next
-                try : Type,VarName,PromptOp = Arg.split()) :
+                try : 
+                        Type,VarName,PromptOp = Arg.split() 
                         Ask_User (Type,VarName,PromptOp); #Util.py
                 except: pass
                 "<Bypass>    - Skip a section"
@@ -224,7 +225,7 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
                 if Bypass : Exit (999, "Nested bypass not allowed")
                 elif  not Arg : Bypass = 1
                 else : Bypass = 0                                             
-                if $Bypass : Print_Log (11, "Start Bypass")  #print("Bypass set: $Bypass\n");
+                if Bypass : Print_Log (11, "Start Bypass")  #print("Bypass set: $Bypass\n");
                 elif KeyWord == '/bypass' :      
                         if Check_Only: next        
                         if  Bypass : Print_Log (11, "End Bypass") 
@@ -245,7 +246,7 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
                 Screen_Datai (Arg, 1, Exclude)
 
                 "<comment>    - Do Nothing"
-        elif KeyWord == 'comment' :
+        elif KeyWord == 'comment' : pass
         elif KeyWord.find("^ctrl-") :
                 if Check_Only: next
                 if KeyWord == 'ctrl-send' :
@@ -256,7 +257,7 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
         elif KeyWord == 'end' :
                 if Check_Only: next
                 Done = 1;
-                if not ExitCmd eq '' :
+                if not ExitCmd == '' :
                         Tag (Cached,"Exiting comm session");
                         Comm.send (ExitCmd+"\n")
                           
@@ -295,8 +296,9 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
                 try: 
                         val = p.findall(Arg) 
                         if val[2]  == '' : Exit (999, "Embedded Cmd file variable %s not defined" % val[2])
-                        Arg = val[1] + &(val[2])  + val[3]
-                        Process_Cmd_File (Comm, "%s/%s" % CmdFilePath, Arg %, Check_Only)
+                        Arg = val[1] + (val[2])  + val[3]
+                        Process_Cmd_File (Comm, "%s/%s" % CmdFilePath, Arg , Check_Only)
+                except: pass
                 Print_Log (11, "Returning to cmd file %s" % CFName)
                 "<includex>    - Include another command file from tmp dir no check"
         elif KeyWord == 'includex' :
@@ -305,13 +307,13 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
                 File ="%s/%s" % Tmp, Arg.tmp
                 if  not os.path.exists(File) : next
                 Process_Cmd_File (Comm, File, 0)
-                Print_Log (11, "Returning to cmd file %s", % CFName);
+                Print_Log (11, "Returning to cmd file %s" % CFName);
                 "<loop>    - Start a loop"
         elif KeyWord == 'loop' :                # Start of loop
                 if Check_Only: next
                 if Caching : Exit (999, "Nested loops not allowed")
                 Caching = 1                  # Turns on looping
-                Tag (Cached,"Starting loop at line %s" Line)
+                Tag (Cached,"Starting loop at line %s" % Line)
                 if not Loop_overide == 0  :  Arg = Loop_overide  # It's been overridden with -L
                 Loop_Time = Arg
                 Stats['TTG'] = Arg;        # This now overrides a previous ETTC
@@ -361,11 +363,11 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
                 if KeyWord == 'set' :   Val =  1
                 else:  Val =  0
                 Tag (Cached,"Setting %s = %s" % Arg, Val)
-                setattr(self,
+                setattr(self)
                 try: Arg
                 except: Exit (999, "Attempted (un)set command on undeclared global \$" + Arg)
                 self.Arg = Val  # Yes this will not work yet, working on it
-                Print_Log (1, "Global var %s = %s" % Arg = Val)
+                Print_Log (1, "Global var %s = %s" % Arg ,Val)
                 "<Sleep>  Sleep x Seconds uSleep micor sec"
         elif KeyWord.find(r"sleep$") :
                 if Check_Only: next
@@ -407,7 +409,7 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
                                 Log_Error ("Timeout!: %s" % Log_Str)    # Unless $Mask_TMO
                                 Print_Log ( 11, "Timed out after %s" % Log_Str)
                 else :  Startup = 0 # We got though at lease 1 wait without a timeout!
-                Buffer = Comm.write(before()
+                Buffer = Comm.write(before())
                 Log_Str = ''
         else :
                 Exit (999, "(Invalid keyword \"%s\" at line %s in Cmd file %s)" % KeyWord, Line, CFName);
@@ -418,25 +420,28 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
 #__________________________________________________________________________
 def Add_2_Flat_Cmd_File(Str) :
 
-        FH
         chomp(Str)
-        try: FH = open ($Tmp+ r"/FlatCmdFile.dat", 'r+')  
+        try: FH = open (Tmp+ r"/FlatCmdFile.dat", 'r+')  
         except: Exit (3, "Can't open %s for cat" % FH)
         FH.write(Str+"\n")
         close(FH)
         return()        
 #__________________________________________________________________________
-def Open_Port(ConType, ConExec):
-        "Open a Serial, TFP,SSH,Telnet for read write"
-        Comm
-        Trap = ''
-        user = ''
-        pw	= ''
+def Open_Port(ConType, ConExec, baud="9600", Trap='',user='',pw=''):
+        "Open a Serial, TFP,SSH,Telnet for read write add passing of baud,trap,user,pw"
 
         if ConType == 'Serial':  # Using Minicom
                 Header = 'Welcome'
                 ExitCmd = "\cA" + "Q\n"
                 Trap = 'lock failed'
+        elif ConType == 'pySerial':  # pyserial import serial
+                Header = ''  #Nothing avaiable on connect
+                ExitCmd = ""  #no exit command this direct to device to close()
+                Trap = '[Could not exclusively lock port|could not open port]' #these are returne from open()
+                if "Linux" : OpenPort = serial.Serial("/dev/ttyS1", baud ,parity="N", bytesize=8,stopbits=1,timeout=1,xonxoff=0,dsrdtr=0,rtscts=0, exclusive=True)
+                if "NT" :  OpenPort = serial.Serial("COM1", baud ,parity="N", bytesize=8,stopbits=1,timeout=1,xonxoff=0,dsrdtr=0,rtscts=0, exclusive=True)
+                if "Linux" : OpenExpect = pexpect.fdpexpect.fdspawn(OpenPort) # now can do OpenExpect.[sendline,expect,before,after etc)
+                if "NT" :  exit ("Don't know how to make pexpect work yet on NT")
         elif ConType == 'Telnet' : # 
                 ExitCmd = 'exit'
                 Header = 'Connected to'
@@ -460,7 +465,7 @@ def Open_Port(ConType, ConExec):
                 Trap = 'Login incorrect'
         else :
                 exit( 'What am I doing here??')
-        Print2XLog("Logging in to port: with User:%s PW:%s " % user,pw %,0,1);
+        Print2XLog("Logging in to port: with User:%s PW:%s " % user,pw ,0,1);
 
         Count = 5
         Done = 0
@@ -472,7 +477,7 @@ def Open_Port(ConType, ConExec):
 
         while (not Done and Count) :
                 try : Comm = Expect.spawn(ConExec)
-                except Exit (31, "Couldn't start : $!\n" % ConExec);
+                except: Exit (31, "Couldn't start : $!\n" % ConExec);
                 Comm.log_file(Tmp+"/ExComm.log", "w")
                 if Debug : Expect.Exp_Internal(Verbose)        # Turn on verbose mode if -v
                 #                        $Expect::Debug = 1;
@@ -499,7 +504,7 @@ def Open_Port(ConType, ConExec):
                 else : Count -= 1
 
                 if Done and Count :                                        # There were some retries left!
-                        if not Quiet : print " done!\n" 
+                        if not Quiet : print( " done!\n" )
                 elif not Done and Count :                       # Go round again
                         time.sleep(4/1000000.0)
                 else :        # We're out of retries!
@@ -538,13 +543,13 @@ def Process_Cmd_File(Comm, File, Check_Only, No_Worries) :
         with open (File, r) as fh :
                 for line in fh:
                         Comm = Comm_Current;   #HA Update our Port pointer, incase it changed
-                        if not (Check_Only and Line == 0) : Stats{'Status'} = 'Active' 
-                        if Check_Only and Line == 0) : Stats{'Status'} = 'Check' 
+                        if not (Check_Only and Line == 0) : Stats['Status'] = 'Active' 
+                        if Check_Only and Line == 0 : Stats['Status'] = 'Check' 
                         if Line == 0 : Stats.Update_All
                         Abort(check)
                         if not Done : Line += 1    # Tags the last line used
                         if Done : Print_Log (11, "Command Done") 
-                        if $Done : next 
+                        if Done : next 
                         Log_Str = "%s - Line %s\n" % Msg, Line    # This should now get written to the Expect log
                         chomp(line)
                         line.rstring      # Remove any leading/trailing whitespace
@@ -558,125 +563,116 @@ def Process_Cmd_File(Comm, File, Check_Only, No_Worries) :
                         Raw_Arg_1 = Arg = p[2]
                         Arg = Arg.translate(None,string.whitespace)  # Remove any white space
                         Raw_Arg_2 = Arg;
-                        if Arg.find(r"^\$(.*)")  : Print2XLog ("Found Variable: %s = <%s>\n" % Arg, Arg %,1) 
+                        if Arg.find(r"^\$(.*)")  : Print2XLog ("Found Variable: %s = <%s>\n" % Arg, Arg ,1) 
                         p = re.compile(r"<(\/.*)\>")  #</Loop> will not have matched above
                         Keyword = p.findall(line)
                         if  not Bypass :
                                 p = re.compile(r"/^\$(.*)\[(.*)\]\[(.*)\]->\{(.*)\}")
                                 val = p.findall(Arg)
                                 if Arg.find(r"^\$(.*)\[(.*)\]\[(.*)\]->\{(.*)\})") and  not Check_Only and not KeyWord.find("set$") :
-                                        {  # Array of Hash ex: $UUT_Variable_ref[0]->{Sahasera}
-                                        my $Arg_save = $Arg;
-                                        $Arg = ${$1}[$2][$3]->{$4};
-                                        &Print2XLog  ("Found 2way Variable List->HASH: $Arg_save = <$Arg>",1)
-                                } elsif (($Arg =~ /^\$(.*)\[(.*)\]->\{(.*)\}/) and !$Check_Only and !($KeyWord =~ /set$/)) {  # Array of Hash ex: $UUT_Variable_ref[0]->{Sahasera}
-                                        my $Arg_save = $Arg;
-                                         $Arg = ${$1}[$2]->{$3};
-                                         &Print2XLog  ("Found Variable List->HASH: $Arg_save = <$Arg>",1);
-                                } elsif ( $Arg =~ /^\$(.*)\[(.*)\]\[(.*)\]/ and !$Check_Only and !($KeyWord =~ /set$/)) {
-                                        my $Arg_save = $Arg;
-                                        $Arg = ${$1}[$2][$3];
-                                } elsif ( $Arg =~ /^\$(.*)\[(.*)\]/ and !$Check_Only and !($KeyWord =~ /set$/)) {
-                                        my $Arg_save = $Arg;
-                                        $Arg = ${$1}[$2];
-                                        &Print2XLog  ("Found Variable List-: $Arg_save = <$Arg>",1)
-
-                                        &Print2XLog  ("Found 2 WAY Variable List-: $Arg_save = <$Arg>",1)
-                                } elsif ( $Arg =~ /^\$(.*)/ and !$Check_Only and !($KeyWord =~ /set$/) and !($Arg =~ /^\$\{(.*)\}/)) {
-                                                $Arg = $$1 ;
-                                                &Print2XLog  ("Found Variable: <$$Arg> = $Arg, Raw: $Raw_Arg_1 : $Raw_Arg_2 : $_ ",1)
-                                } elsif ($Arg =~ /\$w+/) {
-                                        &Print2XLog  ("Warning: Found Possible Variable in : $Arg") ;
-                                } elsif ($Arg =~ /\[(.*)\]{3,}/) {
-                                        &Print2XLog  ("Warning: Found Possible Variable dimension too deep : $Arg") ;
-                                } 
-                                else
+                                        # Array of Hash ex: $UUT_Variable_ref[0][x]->{Sahasera}
+                                        Arg_save = Arg
+                                        pp = re.compile(r"^\$(.*)\[(.*)\]\[(.*)\]->\{(.*)\})")
+                                        val2 = pp.findall(Arg)
+                                        #now build or command UUT_Variable_ref[0][x][Sahasera]
+                                        Arg = pp[1][pp[2]][pp[3]][pp[4]]
+                                        Print2XLog  ("Found 2way Variable List->HASH: %s = %s" % Arg_save ,Arg , 1)
+                                elif Arg.find(r"^\$(.*)\[(.*)\]->\{(.*)\}") and not Check_Only and \
+                                         not KeyWord.find("set$") :
+                                        # Array of Hash ex: $UUT_Variable_ref[0]->{Sahasera}
+                                        Arg_save = Arg;
+                                        pp = re.compile(r"^\$(.*)\[(.*)\]->\{(.*)\}")
+                                        val2 = pp.findall(Arg)
+                                        #now build or command UUT_Variable_ref[0][Sahasera]
+                                        Arg = pp[1][pp[2]][pp[3]]                                       
+                                        Print2XLog  ("Found Variable List->HASH: %s = %s" % Arg_save , Arg , 1)
+                                elif  Arg.find(r"^\$(.*)\[(.*)\]\[(.*)\]") and  not Check_Only \
+                                       and  not KeyWord.find(r"set$") :
+                                        Arg_save = Arg
+                                        pp = re.compile(r"^\$(.*)\[(.*)\]\[(.*)\]")
+                                        val2 = pp.findall(Arg)
+                                        #now build or command UUT_Variable_ref[0][Sahasera]
+                                        Arg = pp[1][pp[2]][pp[3]]                                       
+                                elif  Arg.find(r"^\$(.*)\[(.*)\]") and not Check_Only and not KeyWord.find(r"set$") :
+                                        Arg_save = Arg
+                                        pp = re.compile(r"^\$(.*)\[(.*)\]")
+                                        val2 = pp.findall(Arg)
+                                        #now build or command UUT_Variable_ref[0][Sahasera]
+                                        Arg = pp[1][pp[2]]                                          
+                                        Print2XLog  ("Found Variable List-: %s = <%s>" % Arg_save,Arg ,1)
+                                        Print2XLog  ("Found 2 WAY Variable List-: %Arg_save = <%s>" % Arg_save,Arg , 1)
+                                elif Arg.find(r"^\$(.*)") and not Check_Only and not KeyWord.find(r"set$") \
+                                     and  not Arg.find(r"^\$\{(.*)\}/") :
+                                        pp = re.compile(r"^\$(.*)")
+                                        val2 = pp.findall(Arg)
+                                        #now build or command UUT_Variable_ref[0][Sahasera]
+                                        Arg = pp[1]                                        
+                                        Print2XLog  ("Found Variable: <%s> = %s, Raw: %s : %s : %s " % Arg,Arg,Raw_Arg_1, Raw_Arg_2, val ,1)
+                                elif Arg.find(r"\$w+") :
+                                        Print2XLog  ("Warning: Found Possible Variable in : %s" % Arg) 
+                                elif Arg.find(r"\[(.*)\]{3,}") :
+                                        Print2XLog  ("Warning: Found Possible Variable dimension too deep : %s" % Arg) 
                                 
-                        }
-                        else
-                
-                  &Tag ($Cached,"Reading $CFName line $Line\: $KeyWord=$Arg") unless $Check_Only;
-
-                  #Stoke!        unless ($KeyWord =~ /ctrl-\w?|end|wait|send|\/loop|getdata/) {
-                  unless ($KeyWord =~ /ctrl-\w?|end|wait|send|\/loop|\/bypass|getdata/) {
-
-                          # check to make sure $Arg is valid
-                          $Erc = 25;
-                          &Exit (2, "Null $Raw_Arg_1,$Raw_Arg_2,$Arg_save Arg at $CFName line $Line: Cmd=\'$KeyWord\': Arg=\'$Arg\'") if $Arg eq '';
-                          $Erc = 0;
-} #end while
-
-
-
-        if ($Check_Only or ! $Caching or  ($KeyWord =~ /include/)  ) {
-        if (  ! $Bypass  or ($KeyWord eq '/bypass')) {    # see if we are bypassing any code or ending bypass
-                                                          $Done = &Exec_Cmd ($Comm, $CFName, $Line, $KeyWord, $Arg, $Check_Only, 0);
-                                                                  } else {
-                                                                          &Print_Log (11, "Bypass: $KeyWord $Arg");
-                                                                  }
-        } elsif ($KeyWord eq '/loop') {    # Now exec everything in @LBuffer
-
-                while ($TestData{'ATT'} < $Loop_Time) {
-                        $Endtime = &PT_Date(time+$Stats{'TTG'},2);
-                        &Abort (check);
-                        $Stats{'Loop'}++;
-                    #&Print_Log (1, "Session $Stats{'Session'}: Starting loop $Stats{'Loop'} (TTG=$Stats{'TTG'})");
-                &Print_Log (1, "Session $Stats{'Session'}: Starting loop $Stats{'Loop'} (TTG=$Stats{'TTG'}) End Time: $Endtime)");
-                foreach $Cmd (@LBuffer) {
-                        if (  ! $Bypass  or ($Cmd =~ /\/bypass/)) {    # see if we are bypassing any code or ending bypass
-                                                                       &Print_Log (11, "LBuffer Exec: $Cmd");
-                                                                       $Done = &Exec_Cmd ($Comm, split (/,,/, $Cmd));     # was /,/ 3/15/12
-                                                                       } else {
-                                                                               &Print_Log (11, "Bypass: $Cmd");
-                                                                       }
-                }
-                &Stats::Update_All;
-                &Print_Log (11, "Ending loop: ATT = $TestData{'ATT'}, LoopTime = $Loop_Time");
-                }
-                &Tag ($Cached,"Ending loop after $Stats{'Loop'} cycles");
-                $Caching = 0;                   # Turns off caching, ready to execute
-                $Loop_Time = 0;
-                @LBuffer = ();         # In case a crazy want's to start another loop!
-
-                } else {
-                        &Print_Log (11, "Caching: $CFName,$Line,$KeyWord,$Arg,$Check_Only,1");
-                                push @LBuffer, "$CFName,,$Line,,$KeyWord,,$Arg,,$Check_Only,,1" ;
-                                #push @LBuffer, "$CFName,$Line,$KeyWord,$Arg,$Check_Only,1" ;
-                }
-        }
-
-        &Tag ($Cached,"Closing cmd file $File at line $Line");
-        close $FH;
-        $FH--;
-        return();
-}
+                        
+                                if not Check_Only : Tag (Cached,"Reading %s line %s\: %s=%s" % CFName, Line, KeyWord,Arg) 
+                                #        unless ($KeyWord =~ /ctrl-\w?|end|wait|send|\/loop|getdata/) {
+                                if not KeyWord.find(r"ctrl-\w?|end|wait|send|\/loop|\/bypass|getdata") :
+                                        # check to make sure $Arg is valid
+                                        Erc = 25
+                                        if Arg == '' : Exit (2, "Null %s,%s,%s Arg at %s line %s: Cmd=\'%s\': Arg=\'%s\'" % Raw_Arg_1,Raw_Arg_2,Arg_save,CFName,Line,KeyWord,Arg) 
+                                        Erc = 0
+         
+                                if Check_Only or not Caching or  KeyWord.find("include") :
+                                        if not Bypass  or KeyWord == r'/bypass' :     # see if we are bypassing any code or ending bypass
+                                                Done = Exec_Cmd (Comm, CFName, Line, KeyWord, Arg, Check_Only, 0)
+                                        else :
+                                                Print_Log (11, "Bypass: %s %s" % KeyWord, Arg)
+                                elif KeyWord == r'/loop' :    # Now exec everything in @LBuffer
+                                        while TestData['ATT'] < Loop_Time : 
+                                                Endtime = PT_Date(time.time() + Stats['TTG'],2)
+                                                Abort (check)
+                                                Stats['Loop'] +=1
+                                                Print_Log (1, "%s: Starting loop %s (%s) End Time: %s)" % Session,Stats['Session'],Stats['Loop'],Stats['TTG'],Endtime);
+                                                for Cmd in LBuffer:
+                                                        if not Bypass or Cmd.find("\/bypass") :    # see if we are bypassing any code or ending bypass
+                                                                Print_Log (11, "LBuffer Exec: "+ Cmd)
+                                                                Done = Exec_Cmd (Comm, Cmd.split(",,"))     # was /,/ 3/15/12
+                                                        else :
+                                                                Print_Log (11, "Bypass: " + Cmd)
+                                                Stats.Update_All()
+                                                Print_Log (11, "Ending loop: ATT = %s, LoopTime = %s" % TestData['ATT'], Loop_Time);
+                                        Tag (Cached,"Ending loop after %s cycles" % Stats['Loop'])
+                                        Caching = 0                   # Turns off caching, ready to execute
+                                        Loop_Time = 0
+                                        LBuffer = []         # In case a crazy want's to start another loop!
+                                else :
+                                        Print_Log (11, "Caching: %s,%s,%s,%s,%s,1" % CFName,Line,KeyWord,Arg,Check_Only)
+                                        LBuffer.append("%s,,%s,,%s,,%s,,%s,,1" % CFName,Line,KeyWord,Arg,Check_Only)
+        # end of while
+        Tag (Cached,"Closing cmd file %s at line %s" % File,Line)
+        close(FH)
+        FH -= 1
+        return()
 
 #__________________________________________________________________________
-sub Send_Ctrl {        # Send a literal ctrl character to the terminal session
-
-                       my ($Chr) = @_;
-                       my $Foo;
-                       ($Foo, $Chr) = split /-/, $Chr;
-
-                       my $Dev = $SPort[$Stats{'Session'}];
-
-        &Tag ($Cached,"Sending <Ctrl>-$Chr to $Dev");
-        my $Tmp_File = "$Tmp/ctrl";
-        open (TMP, ">$Tmp_File");
-        print TMP "\c$Char";
-        close TMP;
-        system "cat $Tmp_File > $Dev";
-}
+def Send_Ctrl(Chr):
+        "Send a literal ctrl character to the terminal session"
+        Foo, Chr = Chr.split("-")
+        Dev = SPort[Stats['Session']]
+        Tag (Cached,"Sending <Ctrl>-%s to %s" % Chr, Dev)
+        Tmp_File = Tmp + "/ctrl"
+        Tmp = open (Tmp_File, "w");
+        TMP.write("\c%s" %Char)
+        close(TMP)
+        Dev.write("\c%s" %Char)  # Trying this first if not will need to cat file
+        return
 #__________________________________________________________________________
-sub Tag {
+def Tag(Cached, Msg):
+        "Write a Tag"
 
-#!!!    return if $Verbose < 2;
-
-my ($Cached, $Msg) = @_;
-my $Str = ''; # "!\tTag: ";
-$Str .= ($Cached) ? 'Cached' : ''; # 'Live';
-&Print_Log (11, "$Str: $Msg");
-
-}
+        #!!!    return if $Verbose < 2;
+        Str = '' # "!\tTag: ";
+        if Cached : Str += 'Cached' # 'Live';
+        Print_Log (11, "%s: %s" % Str,Msg)
 #__________________________________________________________________________
 1;
