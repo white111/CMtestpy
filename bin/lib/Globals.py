@@ -161,7 +161,8 @@ global Globals; Globals = {   # Globals Dictionary will use to replace perl stri
             "CmdFilePath"     : 21,
             "HashDefPath"     : 21,
             "Location"        : 21,
-            "LogPath" : 21,
+            "LogPath"         : 21,  # usually /var/local/cmtest/logs from testctrl.cfg
+            "LogPathLocal"          : 21,
             "Out_File"        : 0,
             "PC_IP1"          : 0,
             "PC_IP2"          : 0,

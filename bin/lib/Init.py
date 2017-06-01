@@ -33,7 +33,7 @@ CMtestVersion['Init'] = VER + CVS_VER
 
 #_____________________________________________________________________________
 import sys #Added for Ubuntu 9.10 support should work with Fedora
-import File;
+import FileOp
 import Logs
 import Util
 import shutil
@@ -46,11 +46,13 @@ usleep = lambda x: time.sleep(x/1000000.0)
 #use SigmaProbe::SPTestRun;
 #use SigmaProbe::SPTimeStamp;
 #use SigmaProbe::Local;
-import Banner
+import lib.Banner
 from datetime import datetime, timedelta
 from lib.Globals import *
 import socket
-import crypt, getpass, pwd # No Default support for crypt in Windows
+if not os.name == "nt": import crypt, pwd
+import getpass # No Default support for crypt in Windows
+import os.path
 
 
 
@@ -174,7 +176,7 @@ def Init_All(Util_only):
     global GP_Path
     global Cg_File
     global Tmp
-    if os.geteuid()==0 and  not Util_only: exit(  "\n\tLet\'s not let \'root\' run a test - parochial ownership of files awaits!\n\n")
+    if getpass.getuser()=='root' and  not Util_only: exit(  "\n\tLet\'s not let \'root\' run a test - parochial ownership of files awaits!\n\n")
     # Acquired from cmtest.pl BEGIN block in v30 2006/02/15
     OS = os.name
     if os.name == "nt":
@@ -182,28 +184,36 @@ def Init_All(Util_only):
     else:
         OS = "Linux"
 
-    GP_Path = File.fnstrip()
+    GP_Path = FileOp.fnstrip()
     if GP_Path == '' : GP_Path = '..'       # for a $0 of ./
 
     #Get our base directory and find the Station Config File 
-    File.fnstrip()
+    #FileOp.fnstrip()
     if Debug > 0 : print ("OS path detected is:", File.fnstrip())
-    PPATH = File.fnstrip()
+    PPATH = FileOp.fnstrip()
     if PPATH == '': PPATH = ".."
 
     if OS == "NT":
-        Cfg_File = PPATH + "\cfgfiles\testctrl.defaults.cfg"
-        TmpDir = expanduser("~")
+        try:  
+            os.path.isfile(PPATH + "\cfgfiles\testctrl.defaults.cfg")
+            Cfg_File = PPATH + "\cfgfiles\testctrl.defaults.cfg"
+        except:
+            Cfg_File = os.path.abspath(__file__) + "testctrl.defaults.cfg"
+            TmpDir = os.path.expanduser("~")
     else:
-        Cfg_File = '/usr/local/cmtest/testctrl.cfg'
-        TmpDir = expanduser("~") + "/tmp"  
+        try:
+            os.path.isfile('/usr/local/cmtest/testctrl.cfg')
+            Cfg_File = '/usr/local/cmtest/testctrl.cfg'
+            TmpDir = expanduser("~") + "/tmp"  
+        except:
+            Cfg_File = os.path.abspath(__file__) + "testctrl.defaults.cfg"
 
-    if OS == 'nt':
-        Cfg_File = PPath + "/" + "cfgfiles/testctrl.defaults.cfg"
-        Tmp = os.getenv('TMP', "NO_TMP")
-    else :
-        Cfg_File = r'/usr/local/cmtest/testctrl.cfg'
-        Tmp = os.getenv(expanduser("~") + "/tmp", "NO_TMP")
+    #if OS == 'nt':
+        #Cfg_File = PPath + "/" + "cfgfiles/testctrl.defaults.cfg"
+        #Tmp = os.getenv('TMP', "NO_TMP")
+    #else :
+        #Cfg_File = r'/usr/local/cmtest/testctrl.cfg'
+        #Tmp = os.getenv(os.path.expanduser("~") + "/tmp", "NO_TMP")
 
 
     CmdFilePath = r"../" + GP_Path +r"/cmdfiles"
@@ -222,7 +232,6 @@ def Init_All(Util_only):
             exit("Can\'t create tmp directory %s" % Tmp)
 
     if not Util_only:         # Required for test oriented scripts only ...
-
         try: 
             os.path.isfile(Cfg_File)
             First_Time 
@@ -232,7 +241,7 @@ def Init_All(Util_only):
             if os.path.isfile(Cfg_File):
                 exit("Cfg_File:%s doesn\'t exist" % Cfg_file)    # Temporary, until ...
 
-        Erc = Log_History(1)
+        Erc = Logs.Log_History(1)
         if Erc : exit("Init died with Erc=%s trying to open History log" % Erc)
 
         #!! Check to make sure that GUID is set

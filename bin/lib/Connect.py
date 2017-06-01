@@ -29,7 +29,7 @@
 #
 ################################################################################
 VER= 'v0.1 5/24/2017'; # Conversion to Python from Perl 052317 JSW
-CVS_VER = ' [ CVS: $Id: Logs.pm,v 1.10 2011/01/21 18:38:56 joe Exp $ ]';
+CVS_VER = ' [ Git: $Id$ ]';
 global CMtestVersion; 
 if not "CMtestVersion" in globals() : CMtestVersion={}
 CMtestVersion['Connect'] = VER + CVS_VER
@@ -37,14 +37,16 @@ CMtestVersion['Connect'] = VER + CVS_VER
 #use Device;
 
 #import GUI - Not used yet
-import Logs
+import lib.Logs
 import time
 import os.path
 import pexpect #non standard library requires pip install pexpect before use, expect for python
 import pexpect.fdpexpect
 import serial # non standard lib from pip install pyserial
 import string
-import pty # needed for pexpect, does not work on windows(no sudo termianl)
+if not os.name == "nt" : import pty # needed for pexpect, does not work on windows(no sudo termianl)
+import telnetlib
+#from clint.textui import colored, puts import colored #might need this for cross platfrom(win linux) text colors
 
 #__________________________________________________________________________
 def Alert(Msg):
@@ -427,7 +429,7 @@ def Add_2_Flat_Cmd_File(Str) :
         close(FH)
         return()        
 #__________________________________________________________________________
-def Open_Port(ConType, ConExec, baud="9600", Trap='',user='',pw=''):
+def Open_Port(ConType, ConExec, baud="9600", Trap='fail',user='',pw=''):
         "Open a Serial, TFP,SSH,Telnet for read write add passing of baud,trap,user,pw"
 
         if ConType == 'Serial':  # Using Minicom
@@ -442,7 +444,16 @@ def Open_Port(ConType, ConExec, baud="9600", Trap='',user='',pw=''):
                 if "NT" :  OpenPort = serial.Serial("COM1", baud ,parity="N", bytesize=8,stopbits=1,timeout=1,xonxoff=0,dsrdtr=0,rtscts=0, exclusive=True)
                 if "Linux" : OpenExpect = pexpect.fdpexpect.fdspawn(OpenPort) # now can do OpenExpect.[sendline,expect,before,after etc)
                 if "NT" :  exit ("Don't know how to make pexpect work yet on NT")
-        elif ConType == 'Telnet' : # 
+        elif ConType == 'Telnet' : 
+                OpenExpect = telnetlib.Telnet(ConExec)
+                #TelnetExpectpy(FH,Send="",Prompt,Timeout=10)
+                if TelnetExpectpy(OpenExpect, user, "login: ", 3) :
+                        if pw:
+                                if TelnetExpectpy(OpenExpect, pw, Trap, 3) :
+                                        print ("Telnet %s Connected via password", ConExec)
+                        print ("Telnet %s Connected", ConExec)
+                else:
+                        print ("Telnet connect failed")
                 ExitCmd = 'exit'
                 Header = 'Connected to'
         elif ConType == 'TermServer' :
@@ -464,7 +475,8 @@ def Open_Port(ConType, ConExec, baud="9600", Trap='',user='',pw=''):
                 user = Default_Termserver_Config[USER]
                 Trap = 'Login incorrect'
         else :
-                exit( 'What am I doing here??')
+                exit( 'What am I doing here?? no connection method found' + ConType)
+                
         Print2XLog("Logging in to port: with User:%s PW:%s " % user,pw ,0,1);
 
         Count = 5
@@ -674,5 +686,18 @@ def Tag(Cached, Msg):
         Str = '' # "!\tTag: ";
         if Cached : Str += 'Cached' # 'Live';
         Print_Log (11, "%s: %s" % Str,Msg)
+#__________________________________________________________________________
+def TelnetExpectpy(FH,Send="",Prompt='',Timeout=10):
+        """
+        Simple Python based Expect routing using just telnetlib, return the buffer
+        """
+        After = (client.read_very_eager().decode('ascii'))  # clear buffer
+        client.write(Send.encode('ascii') + "\r\n".encode('ascii'))
+        try:
+                Before = (strip_ansi_codes(client.read_until(Prompt.encode('ascii') , Timeout).decode('ascii')))
+        except :
+                Before = 0
+        After = (client.read_very_eager().decode('ascii'))
+        return(Before, After)
 #__________________________________________________________________________
 1;

@@ -34,6 +34,7 @@ CVS_VER = ' [ CVS: $Id: PT.pm,v 1.9 2008/02/22 21:00:51 joe Exp $ ]';
 import sys
 import time
 from lib.Globals import *
+import re
 #import psutil # will need a package  pip install psutil and ggc build of package, lots of pid utils
 
 # Python use Term::ANSIColor;
@@ -791,4 +792,17 @@ def YN(Msg, Default):
             return(0)
 
 #_______________________________________________________________________________
+def strip_ansi_codes(s):
+    """
+    >>> import blessings
+    >>> term = blessings.Terminal()
+    >>> foo = 'hidden'+term.clear_bol+'foo'+term.color(5)+'bar'+term.color(255)+'baz'
+    >>> repr(strip_ansi_codes(foo))
+    u'hiddenfoobarbaz'
+    """
+    return re.sub(r'\x1b\[([0-9,A-Z]{1,2}(;[0-9]{1,2})?(;[0-9]{3})?)?[m|K]?', '', s)
+    #return re.sub(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]', '', s)
+    #return re.sub(r'\x1b\[([0-9,A-Z]{1,2}(;[0-9]{1,2})?(;[0-9]{3})?)?[m|K]?\\r\\n', '', s)
+#_______________________________________________________________________________
+
 1;

@@ -3,7 +3,7 @@
 #
 # Module:      Banner.py
 #
-# Author:      Stuart Lory, Zürich Switzerland.
+# Author:      Stuart Lory, Zurich Switzerland.
 #			   http://search.cpan.org/src/LORY/Text-Banner-1.00/Banner.pm
 #
 # Descr:      Text Banner creation, This should be a Installed module
@@ -22,7 +22,7 @@
 #
 #            Copyright (c) 1995 - 2005 Paul Tindle. All rights reserved.
 #            Copyright (c) 2005-2008 Stoke. All rights reserved.
-# 			 Copyright (c) 1999 Stuart Lory, Zürich Switzerland. All rights reserved.
+# 			 Copyright (c) 1999 Stuart Lory, Zurich Switzerland. All rights reserved.
 # 			 This program is free software; you can redistribute it and/or modify it
 # 			 under the same terms as Perl itself.
 #
@@ -33,160 +33,162 @@
 #
 ################################################################################
 VER= 'v0.1 5/9/2017'; # Conversion to Python from Perl 050917 JSW
-CVS_VER = ' [ CVS: $Id: Logs.pm,v 1.10 2011/01/21 18:38:56 joe Exp $ ]';
-CMtestVersionn['Banner'] = VER + CVS_VER
+CVS_VER = ' [ Git: $Id$ ]';
+global CMtestVersion; 
+if not "CMtestVersion" in globals() : CMtestVersion={}
+CMtestVersion['Banner'] = VER + CVS_VER
 #______________________________________________________________________________
 
 
 #package Text::Banner;
-package Banner;
-use strict(qw(refs vars subs));
+#package Banner;
+#se strict(qw(refs vars subs));
+import re
 
-BEGIN {
-   *Banner::VERSION=*Banner::version=\'$Revision: 1.1 $';
-   *Banner::ID=*Banner::id=\'$Id: Banner.pm,v 1.1 2008/02/22 21:00:51 joe Exp $';
-}
-sub new {
-   my $proto=shift; my $class=ref($proto)||$proto;
-   my $self={}; my $save=$/; undef $/; my ($byte,$var,$num,$pic);
-   foreach $byte (split //,unpack("u*",<DATA>)) {
-      $var=ord $byte;
-      foreach $num (128,64,32,16,8,4,2,1) {
-	 if (($var&$num)==$num) { $pic .=1; } else { $pic .=0; }
-      }
-   }
-   $self->{XL}=$pic; $self->{ORIENTATION}="H"; $self->{SIZE}=1; $/=$save;
-   return bless $self,$class;
-}
-sub rotate {
-   my $self=shift;
-   return $self->{ORIENTATION} unless @_;
-   my $direction=shift;
-   return undef unless ($direction=~/^h|v/i);
-   if ($direction=~/h/i) {
-      $self->{ORIENTATION}="H";
-   } else {
-      $self->{ORIENTATION}="V";
-   }
-   return $self->{ORIENTATION};
-}
-sub size {
-   my $self=shift;
-   return $self->{SIZE} unless @_;
-   my $size=shift;
+
+#global DATA
+#DATA=r"\
+#M````````'#AP0`.'._=$````!0I_*?RA1])D/A,E]QI=!!=+',)##B+"<G#@\
+#M@@```!A!`@0$!A@("!`@A@`B*?RB(``$"'P@0````!PX((```!\````````.\
+#M'#@$$$$$$$`XB@P8*(X(,*!`@0^?00+Z!`_OH(%\!@OH$*%"_@@7^!`_`8+Y\
+#M]!@?H,%]_A!!!`@0?08+Z#!?/H,%^!@OA!P0`$'!!PX`.'!!`(((("`@(``/\
+#M@#X``("`@((((/H($<(`"'T&[=O0'P@HB@_X,']!@_H,'\^@P($""^_08,&#\
+#M!_?X$#Y`@?_\"!\@0(#Z#`GP8+Z#!@_X,&"<$"!`@0<`@0(&#!?0HDCA(B0H\
+#M$"!`@0/\''5DP8,&#AHR8L.#_@P8,&#__08/Z!`@/H,&#%A/?T&#^B0H+Z#`\
+#M?`8+[^($"!`@1!@P8,&"^@P8,%$4$09,F3)DMH*(H(*(H,%$4$"!`C^"""""\
+#M#^^0($"!`^@("`@("`O@0($"!/A!1$```````````'\X<$!`````&$D+]"A`\
+#M/D+Y"A?`#R%`@0G@#Y"A0H7P!^@?($#\`_0/D"!``/(4"=">`(4+]"A0@`@0\
+#M($"!``$"!`H3P!"B>)$2$`@0($"!^`0LUJ%"A`(6*E*C0@#R%"A0G@#Y"A?(\
+#M$``\A0I41T`^0H7R)"`/(#P%">`'P@0($"`$*%"A0G@"%"A0DA@!"A0K6:$`\
+#JA)#!A)"`(B@@0($`/P0000?G$"#`@0'!`@0`$"!!P$"!@@1QA)#`````"
+
+
+   #*Banner::VERSION=*Banner::version=\'$Revision: 1.1 $';
+   #Banner::ID=*Banner::id=\'$Id: Banner.pm,v 1.1 2008/02/22 21:00:51 joe Exp $';
+
+def new(proto) :
+   self={}
+   save=self
+   sep = ''
+   #undef $/; my ($byte,$var,$num,$pic);
+   for byte in Data :
+      var=ord(byte)
+      for num  in (128,64,32,16,8,4,2,1) :
+         if ((var&num)==num) : pic +=1  
+         else : pic +=0 
+   self[XL]=pic
+   self[ORIENTATION]="H"
+   self[SIZE]=1; sep=save
+   return self
+#___________________________________________________________
+def rotate(self='',direction=''):
+   if not self : return self[ORIENTATION]
+
+   if not re.match("^h|v",direction.lower) : return undef 
+   if re.match("h",direction.lower) :
+      self[ORIENTATION]="H"
+   else :
+      self[ORIENTATION]="V"
+
+   return (self[ORIENTATION])
+#_____________________________________________________________
+def size(self, size):
+   if not self : return self[SIZE]
    # Allow up to 5x blowup. After that its too grainy to be of decent use.
-   return undef unless ($size > 0 && $size <6);
-   $self->{SIZE}=$size;
-   return $size;
-}
-sub fill {
-   my $self=shift;
-   return $self->{FILL} unless @_;
-   my $char=shift;
-   if ($char=~/reset/i) {
-   	undef $self->{FILL};
-	$self->_CHANGE;
-	return undef;
-   }
-   $char=substr($char,0,1);	# only one character allowed for fill value.
-   $char=~s/[^\x20-\x7f]+//g;
-   $self->{FILL}=$char if $char;
-   $self->_CHANGE;
-   return $self->{FILL};
-}
-sub _CHANGE {
-   my $self=shift; my $char;
-   foreach $char (@{$self->{STRING}}) {
-      foreach (@{$self->{PIC}->{$char}}) {
-	 s/0/ /g;
-	 if ($self->{FILL}) { s/[^\s]|1/$self->{FILL}/g; } else { s/[^\s]/$char/g; }
-      }
-   }
-}
-sub version { return $Banner::VERSION; }  # since global vars, don't need $self
-sub set {
-   my $self=shift; my $string=shift; my ($char,$var,$pos,$temp,%map);
-   return undef unless $string;
-   undef @{$self->{STRING}};
-   undef $self->{PIC};
-   $string=~s/[^\x20-\x7f]+//g; # We only print ASCII characters 32 to 126. Strip out anything else.
-   @{$self->{STRING}}=split'',$string;
-   foreach (@{$self->{STRING}}) { $map{$_}=1 };
-   foreach $char (keys %map) {
-      $var=ord $char; $var-=32; $pos=$var*49;
-      $temp=substr($self->{XL},$pos,49);
-      foreach (0,7,14,21,28,35,42,49) { push @{$self->{PIC}->{$char}}, substr($temp,$_,7); }
-      push @{$self->{PIC}->{$char}},"0000000"; # this is spacing between lines
-   }
-   $self->_CHANGE if $self->{FILL};
-   return undef;
-}
-sub _BLOWUP {
-   my $self=shift; my ($dynamic,$creation,$output,$temp);
-   $dynamic='$self->{CURRENT_LINE}=~s/(.)/'.'$1' x $self->{SIZE}.'/mg;';
-   eval $dynamic;
-   if ($self->{ORIENTATION}=~/H/i) {
-      $temp=$self->{CURRENT_LINE};
-      $dynamic='$output .="'. '$temp\n' x $self->{SIZE}.'";';
-      eval $dynamic;
-   } else {
-      foreach (split /\n/,$self->{CURRENT_LINE}) {
-	 $dynamic='$output .= "'.'$_\n' x $self->{SIZE}.'";';
-	 eval $dynamic;
-      }
-   }
-   return $output;
-}
-sub get {
-   my $self=shift; my ($creation,$num,$char,$line,$pos,$temp);
-   if ($self->{ORIENTATION}=~/h/i) {
-      foreach $num (0..7) {
-	 undef $self->{CURRENT_LINE};
-         foreach (@{$self->{STRING}}) { $self->{CURRENT_LINE} .=${$self->{PIC}->{$_}}[$num]." "; }
-         if (($self->{SIZE}>1)&&($self->{SIZE}<6)) {
-            $creation .=$self->_BLOWUP;
-         } else {
-            $creation .=$self->{CURRENT_LINE}."\n";
-         }
-      }
-   } else {
-      foreach $char (@{$self->{STRING}}) {
-	 my @array=@{$self->{PIC}->{$char}};
-	 undef $self->{CURRENT_LINE};
-	 foreach $pos (0..6) {
-	    foreach $line (6,5,4,3,2,1,0) { $self->{CURRENT_LINE}.=substr($array[$line],$pos,1); }
-	    $self->{CURRENT_LINE}.="\n";
-	 }
-	 $creation .=$self->{CURRENT_LINE};
-      }
-      if (($self->{SIZE}>1)&&($self->{SIZE}<6)) {
-         $self->{CURRENT_LINE}=$creation;
-         $creation=$self->_BLOWUP;
-      }
-   }
-   return $creation;
-}
+   if not (size > 0  and size <6): return undef 
+   self[SIZE]=size
+   return size
+#_____________________________________________________________
+def fill(self, char):
+   if not self : return self[FILL] 
+   if re.find("reset", char.lower) :
+      del self[FILL]
+      self[_CHANGE]
+      return undef;
 
+   char=char[0:1]	# only one character allowed for fill value.
+   re.sub("[^\x20-\x7f]+","",char)
+   if char : self[FILL]=char 
+   return self[FILL]
+#_______________________________________________________________
+def _CHANGE (self):
+   for char in self[STRING]:
+      for char2 in self[PIC][char] :
+         re.sub(0," ", char2)
+         if self[FILL]:
+            re.sub("[^\s]|1",self[FILL],char2 )
+         else:
+            re.sub("[^\s]",char,char2)
+   return
+#________________________________________________________________
+def version():
+   return Banner[VERSION]  # since global vars, don't need $self
+#________________________________________________________________
+def set(self,string):
+
+   if not string : return undef
+
+   del self[STRING]
+   del self[PIC]
+   re.sub("[^\x20-\x7f]+","",string) # We only print ASCII characters 32 to 126. Strip out anything else.
+   self[STRING]=split('',string)
+   for char in self[STRING] :
+      map[char]=1 
+   for char in map :
+      var=ord(char) 
+      var-=32 
+      pos=var*49
+      temp=self[XL][pos:49]
+      for char2 in (0,7,14,21,28,35,42,49):
+         self[PIC][char]= temp[char2:7]
+         self[PIC][char] = "0000000" # this is spacing between lines
+
+   if self[FILL]: _CHANGE(self)
+   return undef
+#_________________________________________________________________
+def _BLOWUP(self):
+
+   dynamic=self[CURRENT_LINE][0:1] * self[SIZE]
+   if re.search("h", self[ORIENTATION].lower) :
+      temp=self[CURRENT_LINE]
+      output += temp + '\n' * self[SIZE]
+   else :
+      for char in split("\n",self[CURRENT_LINE]) :
+         output += char + '\n' * self[SIZE]
+   return output;
+#_____________________________________________________________________
+def get(self):
+
+   if re.search("h",self[ORIENTATION].lower):
+      for num in {1,2,3,4,5,6,7} :
+         del self[CURRENT_LINE]
+         for char2 in self[STRING] :
+            self[CURRENT_LINE] += self[PIC] + char2[num] + " "
+         if self[SIZE]>1 and self[SIZE]<6 :
+            creation +=_BLOWUP(self)
+         else :
+            creation +=self[CURRENT_LINE] +"\n"
+   else :
+      for char in self[STRING] :
+         array=self[PIC][char]
+         del self[CURRENT_LINE]
+         for pos in {0,1,2,3,4,5,6} :
+            for line in {6,5,4,3,2,1,0} :
+               self[CURRENT_LINE]+=array[line][pos:1] 
+            self[CURRENT_LINE]+="\n"
+
+         creation += self[CURRENT_LINE]
+
+      if self[SIZE]>1 and self[SIZE]<6 :
+         self[CURRENT_LINE]=creation
+         creation=_BLOWUP(self)
+
+      return creation
+#________________________________________________________________________
 1;
 
-__DATA__
-M````````'#AP0`.'._=$````!0I_*?RA1])D/A,E]QI=!!=+',)##B+"<G#@
-M@@```!A!`@0$!A@("!`@A@`B*?RB(``$"'P@0````!PX((```!\````````.
-M'#@$$$$$$$`XB@P8*(X(,*!`@0^?00+Z!`_OH(%\!@OH$*%"_@@7^!`_`8+Y
-M]!@?H,%]_A!!!`@0?08+Z#!?/H,%^!@OA!P0`$'!!PX`.'!!`(((("`@(``/
-M@#X``("`@((((/H($<(`"'T&[=O0'P@HB@_X,']!@_H,'\^@P($""^_08,&#
-M!_?X$#Y`@?_\"!\@0(#Z#`GP8+Z#!@_X,&"<$"!`@0<`@0(&#!?0HDCA(B0H
-M$"!`@0/\''5DP8,&#AHR8L.#_@P8,&#__08/Z!`@/H,&#%A/?T&#^B0H+Z#`
-M?`8+[^($"!`@1!@P8,&"^@P8,%$4$09,F3)DMH*(H(*(H,%$4$"!`C^"""""
-M#^^0($"!`^@("`@("`O@0($"!/A!1$```````````'\X<$!`````&$D+]"A`
-M/D+Y"A?`#R%`@0G@#Y"A0H7P!^@?($#\`_0/D"!``/(4"=">`(4+]"A0@`@0
-M($"!``$"!`H3P!"B>)$2$`@0($"!^`0LUJ%"A`(6*E*C0@#R%"A0G@#Y"A?(
-M$``\A0I41T`^0H7R)"`/(#P%">`'P@0($"`$*%"A0G@"%"A0DA@!"A0K6:$`
-JA)#!A)"`(B@@0($`/P0000?G$"#`@0'!`@0`$"!!P$"!@@1QA)#`````
 
-__END__
-
-=head1 NAME
+"""
 
 Text::Banner - create text resembling Unix 'banner' command
 
@@ -325,8 +327,8 @@ Text::Banner was written November, 1999 by Stuart Lory (stuart@onyx.ch). The
 module has been tested in both a Unix and PC environment without any known
 problems. If you find a bug, please advise.
 
-=cut
+"""
 
 
 #_____________________________________________________________________________
-1;
+

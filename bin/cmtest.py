@@ -29,28 +29,29 @@ global CMtestVersion;
 if not "CMtestVersion" in globals() : CMtestVersion={}
 CMtestVersion['cmtest'] = VER + CVS_VER
 
+
 import platform
 import sys
-#sys.path.append("../lib;")
+sys.path.append("../lib;")
+import os
 import os.path
 from os.path import expanduser
 import socket
 from optparse import OptionParser
 #import lib  # import private library functions for CMtestpy, see lib/__init__.py
-from lib.Globals import *
-import lib.Util
-from lib.Util import Abort
-import lib.File
+from Globals import *
+import Util
+#from lib.Util import Abort
 #from lib.Globals import Myglobals
 import Connect
-import File
+import FileOp
 import Init
 import Logs
-import Mav
-import Power
-import Util
-import GUI
+#import Mav
+#import Power
+#import lib.GUI
 import sys, traceback  # catch keyboard interupt
+
 
 #__________________________________________________________________________
 def main():
@@ -73,6 +74,7 @@ def main():
     global Out_File
     global Loop_overide
     global shucks; shucks = 0
+    global Globals
 
     #Get input from command line
     usage = "usage: %prog session#"
@@ -85,7 +87,7 @@ def main():
                       help="Batch Mode - no Menu prompt, does not support multi level menu" )  
     parser.add_option("-s", "--session", dest="Session", type="int", default=0,
                       help="Set Sesion #, Default is first avaiable")
-    arser.add_option("-L", "--Loop", dest="Loop", type="int", default=0,
+    parser.add_option("-L", "--Loop", dest="Loop", type="int", default=0,
                      help="Overide all Loop counts(seconds)")    
     parser.add_option("-F", "--Force", dest="Force", type="int", default=0,
                       help="Force Session #")
@@ -99,40 +101,42 @@ def main():
     Debug += options.Debug
     Verbose += options.Verbose
     Menu1 = options.Menu1
-    Session = options.session
+    Session = options.Session
     SessionForce = options.Force
     UserID = options.User
     Out_File = options.Output
-    Loop_overide = option.Loop
+    Loop_overide = options.Loop
 
     OS = os.name
     if os.name == "nt":
         OS = "NT"
     else:
         OS = "Linux"
-
+    
     #Get our base directory and find the Station Config File 
-    File.fnstrip()
-    if Debug > 0 : print ("OS path detected is:", File.fnstrip())
-    PPATH = File.fnstrip()
+    File = os.path.abspath(__file__)
+    if Debug > 0 : print ("OS path detected is: %s " % FileOp.fnstrip(File,1))
+    PPATH = FileOp.fnstrip(File)
     if PPATH == '': PPATH = ".."
 
     if OS == "NT":
         Cfg_File = PPATH + "\cfgfiles\testctrl.defaults.cfg"
+        #Globals[LogPath] = "\Logs"
         TmpDir = expanduser("~")
     else:
         Cfg_File = '/usr/local/cmtest/testctrl.cfg'
+        #Globals[LogPath] = r"/var/local/cmtest/logs"
         TmpDir = expanduser("~") + "/tmp"  
 
-    if OS == 'nt':
-        Cfg_File = PPath + "/" + "cfgfiles/testctrl.defaults.cfg"
-        Tmp = os.getenv('TMP', "NO_TMP")
-    else :
-        Cfg_File = r'/usr/local/cmtest/testctrl.cfg'
-        Tmp = os.getenv(expanduser("~") + "/tmp", "NO_TMP")
+    #if OS == 'nt':
+        #Cfg_File = PPath + "/" + "cfgfiles/testctrl.defaults.cfg"
+        #Tmp = os.getenv('TMP', "NO_TMP")
+    #else :
+        #Cfg_File = r'/usr/local/cmtest/testctrl.cfg'
+        #Tmp = os.getenv(expanduser("~") + "/tmp", "NO_TMP")
 
 
-    CmdFilePath = r"../" + PPath +r"/cmdfiles"
+    CmdFilePath = r"../" + PPATH +r"/cmdfiles"
 
     Logs.ASCIIColor('reset')
 
@@ -173,9 +177,9 @@ def _Init():
                     exit()
     except:
         print ("Un-suported linux type found, are we Windows? I am going to die now")
-        exit()	
+        if not Debug : exit()	
 
-    Init_All (0)
+    Init.Init_All (0)
     Erc = 101
     Force = options.Force
     Erc = 0
