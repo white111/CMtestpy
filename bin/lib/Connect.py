@@ -442,10 +442,10 @@ def Open_Port(ConType, ConExec, baud="9600", Trap='',user='',pw=''):
                 if "NT" :  OpenPort = serial.Serial("COM1", baud ,parity="N", bytesize=8,stopbits=1,timeout=1,xonxoff=0,dsrdtr=0,rtscts=0, exclusive=True)
                 if "Linux" : OpenExpect = pexpect.fdpexpect.fdspawn(OpenPort) # now can do OpenExpect.[sendline,expect,before,after etc)
                 if "NT" :  exit ("Don't know how to make pexpect work yet on NT")
-        elif ConType == 'Telnet' : # 
+        elif ConType == 'Telnet' : # Direct telnet to a system but still using Expect to look at output
                 ExitCmd = 'exit'
                 Header = 'Connected to'
-        elif ConType == 'TermServer' :
+        elif ConType == 'TermServer' :  #still telnet but talking to a serial port through Telnet
                 ExitCmd = "\c]quit"
                 Header = 'Connected to'
                 Trap = 'is being used by'
