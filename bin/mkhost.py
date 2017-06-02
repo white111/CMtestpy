@@ -37,6 +37,10 @@ crypt ( Windows)
 pip install pexpect  # Linux https://pypi.python.org/pypi/pexpect
 pip install Wexpect  #import pexpect # Windows used M:\python\cmtest30>C:\Users\joe\AppData\Local\Programs\Python\Python35\Scripts\pip install pexpect"
 pip install pyserial  # import serial
+pip install fabric  # SSH util proposed - No
+pip3.4 install ssh #linux
+pip3.5 install ssh # Windows  Having install issue on both systems
+yum install python34-devel
 use strict;
 use Getopt::Std qw(:DEFAULT);
 
