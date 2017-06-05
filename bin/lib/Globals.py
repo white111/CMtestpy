@@ -78,7 +78,6 @@ global GUID; GUID            = 0                    # Global Unit ID (SigmaProbe
 global Home; Home            = os.name           # Will be '' if Win32, but that's OK!
 #global Host_ID         = os.hostname
 global Host_ID; Host_ID         = platform.uname()[1]      # uses import platform.uname
-global LBuffer; LBuffer         = []                   # Loop buffer
 global Log_Str; Log_Str         = ''                   # For passing messages between subs
 global MacAddr; MacAddr         = ''
 global Main ; Main            = __file__      # Script file name without the path
@@ -92,7 +91,6 @@ global Quiet; Quiet           = 0                    # $opt_q parameter
 global SN; SN              = []
 global MAC; MAC              = []     			 # Added JW format "xx.xx.xx.xx.xx:x"(mac:qty)
 global Cfg_File;  Cfg_File          = ""           #Not sure this is needed(pulled in from Perl)
-global Tmp; Tmp                = ""                 #Not sure this is needed(pulled in from Perl)
 global CmdFilePath; CmdFilePath = ""            #Not sure this is needed(pulled in from Perl)
 
 global Stats; Stats           = {                     # Used by the Stats mechanism
@@ -157,7 +155,7 @@ global WebData; WebData = []                        #Moved from PT.py 5/15/17
         #                - Declare ligitimate but unessential vars by
         #                                'Var' => 0
 
-global Globals; Globals = {   # Globals Dictionary will use to replace perl string pointer to string ${$Var} = Data
+global GlobalVar; GlobalVar = {   # Globals Dictionary will use to replace perl string pointer to string ${$Var} = Data
             "CmdFilePath"     : 21,
             "HashDefPath"     : 21,
             "Location"        : 21,
@@ -188,8 +186,11 @@ global Loop_Time;Loop_Time       = 0;        # ATT inside of the loop cycle
 global LBuffer;LBuffer         = ();       # Loop buff
 global Caching; Caching         = 0;        # Set by a <Loop> cmd, unset by </Loop>
 #    our $Retry_Count     = 0;        # Set by a <Retry> cmd, unset by </Retry>
-
-print ("Globals init .. Done")
-
+global PathSep; 
+if os.name == "nt" : PathSep = "\\" 
+else: PathSep = "/"
+#print(globals())
+print ("Globals init .. Done:%i" % Debug)
+                #return
 #__________________________________________________________________________
 1;

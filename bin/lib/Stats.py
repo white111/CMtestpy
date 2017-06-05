@@ -31,8 +31,8 @@ CVS_VER = ' [ Git: $Id$ ]';
 global CMtestVersion; 
 if not "CMtestVersion" in globals() : CMtestVersion={}
 CMtestVersion['Stats'] = VER + CVS_VER
-
-from lib.Globals import *
+#import Globals
+#from lib.Globals import *
 
 #__________________________________________________________________________________
 def Read(Stats_File):
@@ -58,12 +58,12 @@ def Read(Stats_File):
         fh.close
         return
 #__________________________________________________________________________________
-def Session(Op, Sess=Stats['Session']):
+def Session(Op):  #Sess=Stats['Session']
         global Stats
         if not Stats_Path : exit( "Stats_Path not defined! Did testctrl.cfg get sourced??")
            
         File = Stats_Path + '/system/' + Stats['Host_ID'] + '-'
-        FileName = File + Sess
+        FileName = File + Stats['Session']
         UMask = os.umask()
         os.umask(0)
         Done = 0

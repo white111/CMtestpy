@@ -35,7 +35,7 @@ from os import listdir
 from os.path import isfile, join
 import time
 import sys
-import Globals
+#import Globals
 
 #What to use here for python?
 #use Time::HiRes qw(gettimeofday tv_interval);
@@ -323,7 +323,7 @@ def Log_Event_Record(OpID, PN, SN, TID, Result, Ptr):
 def Log_History(Type):
      "Log script start / end activity "
 
-     LogFile = LogPath + r"/"+history.log
+     LogFile = LogPath + PathSep + history.log
      Msg = PT_Date(int(time.time()), 1) + ":\t"+Stats['TimeStamp']
      Msg += "\t"+Op_ID+"\t"+Stats['Host_ID']
      if Stats['Session']: Msg += "-"+Stats['Session'] 

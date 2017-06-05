@@ -38,6 +38,7 @@ import Logs
 import Util
 import shutil
 import Stats # qw( %Stats %TestData %Globals $Stats_Path);
+import os
 # Not converted to Python use Cwd qw( abs_path ) What is it?
 import time
 usleep = lambda x: time.sleep(x/1000000.0)
@@ -48,7 +49,7 @@ usleep = lambda x: time.sleep(x/1000000.0)
 #use SigmaProbe::Local;
 import lib.Banner
 from datetime import datetime, timedelta
-from lib.Globals import *
+import Globals
 import socket
 if not os.name == "nt": import crypt, pwd
 import getpass # No Default support for crypt in Windows
@@ -133,7 +134,8 @@ def Final():
 #_______________________________________________________________
 def First_Time():
     " Check if test evironment is setup before running cmtest"
-
+    
+    if Debug : print("In Function %s" % __name__)
     Print_Log ( 1, "Running First_Time")
 
     print("\n\tThe main Test Controller configuration file (%s) is MIA!\n" % Cfg_File)
@@ -173,6 +175,7 @@ def Get_Release_Info():
 def Init_All(Util_only):
     " This is the 1st Init stage, done before getopts,"
     "usually called at the beginning of &main::Init"
+    if Globals.Debug : print("In sub Function %s" % __name__)
     global GP_Path
     global Cg_File
     global Tmp
@@ -184,29 +187,30 @@ def Init_All(Util_only):
     else:
         OS = "Linux"
 
-    GP_Path = FileOp.fnstrip()
-    if GP_Path == '' : GP_Path = '..'       # for a $0 of ./
+    #GP_Path = FileOp.fnstrip()
+    #if GP_Path == '' : GP_Path = '..'       # for a $0 of ./
 
+    # Already done in cmtest.py, not sure this is used by other routines
     #Get our base directory and find the Station Config File 
     #FileOp.fnstrip()
-    if Debug > 0 : print ("OS path detected is:", File.fnstrip())
-    PPATH = FileOp.fnstrip()
-    if PPATH == '': PPATH = ".."
+    #if Debug > 0 : print ("OS: %s path detected is:" % OS,  File.fnstrip())
+    #PPATH = FileOp.fnstrip()
+    #if PPATH == '': PPATH = ".."
 
-    if OS == "NT":
-        try:  
-            os.path.isfile(PPATH + "\cfgfiles\testctrl.defaults.cfg")
-            Cfg_File = PPATH + "\cfgfiles\testctrl.defaults.cfg"
-        except:
-            Cfg_File = os.path.abspath(__file__) + "testctrl.defaults.cfg"
-            TmpDir = os.path.expanduser("~")
-    else:
-        try:
-            os.path.isfile('/usr/local/cmtest/testctrl.cfg')
-            Cfg_File = '/usr/local/cmtest/testctrl.cfg'
-            TmpDir = expanduser("~") + "/tmp"  
-        except:
-            Cfg_File = os.path.abspath(__file__) + "testctrl.defaults.cfg"
+    #if OS == "NT":
+        #try:  
+            #os.path.isfile(PPATH + "\cfgfiles\testctrl.defaults.cfg")
+            #Cfg_File = PPATH + "\cfgfiles\testctrl.defaults.cfg"
+        #except:
+            #Cfg_File = os.path.abspath(__file__) + "testctrl.defaults.cfg"
+            #TmpDir = os.path.expanduser("~")
+    #else:
+        #try:
+            #os.path.isfile('/usr/local/cmtest/testctrl.cfg')
+            #Cfg_File = '/usr/local/cmtest/testctrl.cfg'
+            #TmpDir = expanduser("~") + "/tmp"  
+        #except:
+            #Cfg_File = os.path.abspath(__file__) + "testctrl.defaults.cfg"
 
     #if OS == 'nt':
         #Cfg_File = PPath + "/" + "cfgfiles/testctrl.defaults.cfg"
@@ -216,7 +220,7 @@ def Init_All(Util_only):
         #Tmp = os.getenv(os.path.expanduser("~") + "/tmp", "NO_TMP")
 
 
-    CmdFilePath = r"../" + GP_Path +r"/cmdfiles"
+    #CmdFilePath = r"../" + GP_Path +r"/cmdfiles"
 # end [acquired]
 
     try: 
@@ -230,12 +234,14 @@ def Init_All(Util_only):
             os.mkdir(Tmp)
         except:
             exit("Can\'t create tmp directory %s" % Tmp)
-
+    print("Debug in Init all:%i" % Debug)
+    if Debug : Print("Run config read with %s" % Cfg_File)
     if not Util_only:         # Required for test oriented scripts only ...
         try: 
             os.path.isfile(Cfg_File)
             First_Time 
-            Erc = Read_Cfg_File(Cfg_File)  # $Cfg_File is defined in main:: BEGIN block
+            if Debug : Print("Run config read with %s" % Cfg_File)
+            Erc = Util.Read_Cfg_File(Cfg_File)  # $Cfg_File is defined in main:: BEGIN block
             if Erc: exit("Init died with Erc=%s trying to read Cfg_File \'%s\'" % Erc, Cfg_File)                # NB: No Erc translation yet!
         except:     
             if os.path.isfile(Cfg_File):

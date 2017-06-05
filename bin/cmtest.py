@@ -28,9 +28,13 @@ CVS_VER = ' [ CVS: $Id: Logs.pm,v 1.10 2011/01/21 18:38:56 joe Exp $ ]';
 global CMtestVersion; 
 if not "CMtestVersion" in globals() : CMtestVersion={}
 CMtestVersion['cmtest'] = VER + CVS_VER
-
-
-import platform
+import Globals
+#from Globals import *
+import Util
+import Init
+import FileOp
+import Logs
+import Connect
 import sys
 sys.path.append("../lib;")
 import os
@@ -39,43 +43,47 @@ from os.path import expanduser
 import socket
 from optparse import OptionParser
 #import lib  # import private library functions for CMtestpy, see lib/__init__.py
-from Globals import *
-import Util
+#import Globals
+#print(globals())
 #from lib.Util import Abort
 #from lib.Globals import Myglobals
-import Connect
-import FileOp
-import Init
-import Logs
+
 #import Mav
 #import Power
 #import lib.GUI
 import sys, traceback  # catch keyboard interupt
+import platform
+
 
 
 #__________________________________________________________________________
 def main():
-
-
+    
+    #Globals.Myglobals()
+    #import Globals
+    print (Globals.Debug)
+    #print("My Debug = %i" % Debug)
+    print(globals())
     #Debug flag 
+    
+    #global Debug
     #Debug = 1
-    global Debug
-    global Verbose
-    global Menu1
-    global session
-    global Cfg_File
-    global Tmp
-    global CmdFilePath
-    global Version
-    global Session
-    global SessionForce
-    global CMPipe; CMPipe=os.getenv('CmTest_Release_Pipe', "No_Pipe") 
-    global UserID
-    global Out_File
-    global Loop_overide
-    global shucks; shucks = 0
-    global Globals
-
+    #global Verbose
+    #global Menu1
+    #global session
+    #global Cfg_File
+    #global Tmp
+    #global CmdFilePath
+    #global Version
+    #global Session
+    #global SessionForce
+    #global CMPipe; CMPipe=os.getenv('CmTest_Release_Pipe', "No_Pipe") 
+    #global UserID
+    #global Out_File
+    #global Loop_overide
+    #global shucks; shucks = 0
+    #global GlobalVar
+    #print (global())
     #Get input from command line
     usage = "usage: %prog session#"
     parser = OptionParser(usage)
@@ -98,31 +106,34 @@ def main():
     (options, args) = parser.parse_args()
     #if not options.Session :
         #parser.error("-s session# required")
-    Debug += options.Debug
-    Verbose += options.Verbose
-    Menu1 = options.Menu1
-    Session = options.Session
-    SessionForce = options.Force
-    UserID = options.User
-    Out_File = options.Output
-    Loop_overide = options.Loop
+    Globals.Debug += options.Debug
+    Globals.Verbose += options.Verbose
+    Globals.Menu1 = options.Menu1
+    Globals.Session = options.Session
+    Globals.SessionForce = options.Force
+    Globals.UserID = options.User
+    Globals.Out_File = options.Output
+    Globals.Loop_overide = options.Loop
 
     OS = os.name
     if os.name == "nt":
         OS = "NT"
     else:
         OS = "Linux"
+        
+
     
     #Get our base directory and find the Station Config File 
     File = os.path.abspath(__file__)
-    if Debug > 0 : print ("OS path detected is: %s " % FileOp.fnstrip(File,1))
-    PPATH = FileOp.fnstrip(File)
+    PPATH = FileOp.fnstrip(File,1)
+    if Globals.Debug > 0 : print ("OS path detected is: %s " % PPATH)
     if PPATH == '': PPATH = ".."
 
     if OS == "NT":
-        Cfg_File = PPATH + "\cfgfiles\testctrl.defaults.cfg"
+        Cfg_File = PPATH + r"\cfgfiles\testctrl.defaults.cfg"
         #Globals[LogPath] = "\Logs"
         TmpDir = expanduser("~")
+        if Globals.Debug > 0 : print ("Config path detected is: %s " % Cfg_File)
     else:
         Cfg_File = '/usr/local/cmtest/testctrl.cfg'
         #Globals[LogPath] = r"/var/local/cmtest/logs"
@@ -160,25 +171,28 @@ def main():
 #_____________________________________________________________________________
 def _Init():
     "Initialize Cmtest"
+    if Globals.Debug : print("In this Function %s" % __name__)
     global Linux_gbl
     global Erc
     global Force
     
-    Linux_gbl = 'Ubuntu';  # Added 3/4/10 to support Ubuntu install
-    try:
-        with open ("/etc/*release", r) as fh :
-            for line in fh:    
-                if re.search(r"Ubuntu", line) : Linux_gbl = 'Ubuntu'
-                elif re.search(r"Fedora", line) : Linux_gbl = 'Fedora'
-                elif re.search(r"CentOS", line) : Linux_gbl = 'CentOS'
-                else : 
-                    Linux_gbl = 'unknown';
-                    print ("Un-suported linux type found, I am going to die now")
-                    exit()
-    except:
-        print ("Un-suported linux type found, are we Windows? I am going to die now")
-        if not Debug : exit()	
-
+    if not os.name == "nt" :
+        Linux_gbl = 'Ubuntu';  # Added 3/4/10 to support Ubuntu install
+        try:
+            with open ("/etc/*release", r) as fh :
+                for line in fh:    
+                    if re.search(r"Ubuntu", line) : Linux_gbl = 'Ubuntu'
+                    elif re.search(r"Fedora", line) : Linux_gbl = 'Fedora'
+                    elif re.search(r"CentOS", line) : Linux_gbl = 'CentOS'
+                    else : 
+                        Linux_gbl = 'unknown';
+                        print ("Un-suported linux type found, I am going to die now")
+                        exit()
+        except:
+            print ("Un-suported linux type found, are we Windows? I am going to die now")
+            if not Debug : exit()
+    #else we are NT
+    print ("Debug in _Init %i" % Globals.Debug)
     Init.Init_All (0)
     Erc = 101
     Force = options.Force
@@ -193,6 +207,10 @@ def _catch_zap():
     Exit(998,"<Ctrl>-C Aborted");
 
 #____________________________________________________________________________________
+
+
+
+
 
 if __name__ == "__main__":
     main()

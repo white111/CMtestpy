@@ -33,7 +33,7 @@ CVS_VER = ' [ CVS: $Id: PT.pm,v 1.9 2008/02/22 21:00:51 joe Exp $ ]';
 #import lib.Logs
 import sys
 import time
-from lib.Globals import *
+#import Globals
 import re
 #import psutil # will need a package  pip install psutil and ggc build of package, lots of pid utils
 

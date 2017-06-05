@@ -38,6 +38,7 @@ CMtestVersion['Connect'] = VER + CVS_VER
 
 #import GUI - Not used yet
 import lib.Logs
+import lib.Init
 import time
 import os.path
 import pexpect #non standard library requires pip install pexpect before use, expect for python

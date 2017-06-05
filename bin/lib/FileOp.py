@@ -51,7 +51,7 @@ def fnstrip(Full_FN="", Specifier=9) :
     "else returns script start directory and script name"
        ############################################  Stop #################################
     if (not Full_FN == "") and ( Specifier < 9 ) :
-            Ret_val1,Ret_val2 =os.path.split(Full_FN)
+        Ret_val1,Ret_val2 =os.path.split(Full_FN)
         #        X:        Returns:
         #        0        c:/usr/tmp/foo.txt     # Unchanged
         if Specifier == 0 : return(Full_FN)
@@ -60,20 +60,21 @@ def fnstrip(Full_FN="", Specifier=9) :
             Ret_val=Ret_val1
         #        2        c:/usr/tmp/foo         # Parent dir + base filename
         elif Specifier == 2 : 
-            Ret_val1 + "/" + Ret_val2.split(".") ,_ = os.path.splitext(Full_FN)[0])
+            Ret_val = Ret_val1 + PathSep + Ret_val2.split(".")[0] # ,_ = os.path.splitext(Full_FN)[0])
         #        3        foo.txt                # File name + extension
-        elif Specifier == 3 : return(os.path.split(Full_FN)[1])
+        elif Specifier == 3 : Ret_val = os.path.split(Full_FN)[1]
         #        4        tmp                    # Parent dir
-        elif Specifier == 4 : return(os.path.pardir(Full_FN)[1])
+        elif Specifier == 4 : Ret_val = os.path.pardir(Full_FN)[1]
         #*       6        c:/usr                 # Grand-parent path
-        elif Specifier == 6 : return(os.path.split(Full_FN.split(".")[-2])[0])
+        elif Specifier == 6 : Ret_val = os.path.split(Full_FN.split(".")[-2])[0]
         #        7        foo                    # Base filename
-        elif Specifier == 7 : return(os.path.split(Full_FN.split(".")[-2]))
+        elif Specifier == 7 : Ret_val = os.path.split(Full_FN.split(".")[-2])
         #        8        txt                    # File extension
-        else: return(Ret_val.split(".")[-1])
+        else: Ret_val = Ret_val.split(".")[-1]
         
+        return(Ret_val)
     else :
-        return ( os.getcwd() + "/" + sys.argv[0] )
+        return ( os.getcwd() )
 
 #__________________________________________________________________________________
 def File_List (str1=".",No_Recurse=0):
