@@ -32,12 +32,9 @@ if "CMtestVersion" not in globals() : CMtestVersion={}
 CMtestVersion['Init'] = VER + CVS_VER
 
 #_____________________________________________________________________________
+import Globals
 import sys #Added for Ubuntu 9.10 support should work with Fedora
-import FileOp
-import Logs
-import Util
 import shutil
-import Stats # qw( %Stats %TestData %Globals $Stats_Path);
 import os
 # Not converted to Python use Cwd qw( abs_path ) What is it?
 import time
@@ -47,15 +44,16 @@ usleep = lambda x: time.sleep(x/1000000.0)
 #use SigmaProbe::SPTestRun;
 #use SigmaProbe::SPTimeStamp;
 #use SigmaProbe::Local;
-import lib.Banner
+import Banner
 from datetime import datetime, timedelta
-import Globals
 import socket
 if not os.name == "nt": import crypt, pwd
 import getpass # No Default support for crypt in Windows
 import os.path
-
-
+import FileOp
+import Logs
+import Util
+import Stats # qw( %Stats %TestData %Globals $Stats_Path);
 
 
 #__________________________________________________________________________
@@ -176,16 +174,12 @@ def Init_All(Util_only=0):
     " This is the 1st Init stage, done before getopts,"
     "usually called at the beginning of &main::Init"
     if Globals.Debug : print("In sub Function %s" % __name__)
-    global GP_Path
-    global Cg_File
-    global Tmp
     if getpass.getuser()=='root' and  not Util_only: exit(  "\n\tLet\'s not let \'root\' run a test - parochial ownership of files awaits!\n\n")
     # Acquired from cmtest.pl BEGIN block in v30 2006/02/15
-    OS = os.name
     if os.name == "nt":
-        OS = "NT"
+        Globals.OS = "NT"
     else:
-        OS = "Linux"
+        Globals.OS = "Linux"
 
     #GP_Path = FileOp.fnstrip()
     #if GP_Path == '' : GP_Path = '..'       # for a $0 of ./
@@ -252,44 +246,42 @@ def Init_All(Util_only=0):
         if Globals.Erc : exit("Init died with Erc=%s trying to open History log" % Globals.Erc)
 
         #!! Check to make sure that GUID is set
-        TestLogPath = Globals.LogPath+"/logfiles"
+        TestLogPath = Globals.GlobalVar['LogPath'] + Globals.PathSep + "logfiles"
         if not os.path.isdir(TestLogPath) :
-            Exit(999, "No permenant log file path >%s<" % TestLogPath)
+            Util.Exit(999, "No permenant log file path >%s<" % TestLogPath)
         return
 #__________________________________________________________________________
 def Init_Also(Util_only) :
     "This is the 3rd Init stage, done after getopts, etc"
     "usually called at the end of &main::Init"
-    global GUI
-    global Pid
-    global XLog
-    if Debug : 
-        print( "\n\tDebug=%i\n\tQuiet=%i\n\tVerbose=%i\n\n" % Debug, Quiet,Verbose)
 
-    Show_INC
+    if Globals.Debug : 
+        print( "Debug Quiet Verbose", Globals.Debug, Globals.Quiet, Globals.Verbose)
+
+    Util.Show_INC
     #our $GUI = ($ENV{DISPLAY} eq '') ? 0 : 1;        # !!! but what about Win32?
-    GUI = 0
+    Globals.GUI = 0
 
     #!!! we can probably lose this test, since disty.pm is the only declarer
     #     of $Util_Only, since no one else uses Init.pm!
-    if not Util_only :        # Session = '' ...
-        if not SessionForce :
+    if not Globals.Util_only :        # Session = '' ...
+        if not Globals.SessionForce :
             Stats.Session ('next')               # Sets the next Session No.
         else :
-            Stats['Session'] = Session;
+            Globals.Stats['Session'] = Globals.Session;
             Pid = Stats.Session ('read');        # Returns 0 if available
                     # check the process table ...
-            if Pid and not Pid == Stats['PID'] or Is_Running(Pid, 1) :
+            if Globals.Pid and not Globals.Pid == Globals.Stats['PID'] or Is_Running(GLobals.Pid, 1) :
                     # The requested session is already running!
-                if not SessionForce : Exit(107, "Session %i start declined" % Session) 
+                if not Globals.SessionForce : Exit(107, "Session %i start declined" % Globals.Session) 
                 Print_Log (11, "Forcing session %i" % Session)
-            Stats.Session ('write')                # Tags the Session.
+            Stats.Session('write')                # Tags the Session.
 
-        Tmp += '/s' + Stats['Session']
-        if not os.path.isdir : 
-            try : os.mkdir(Tmp)
-            except: exit("Unable to Create tmp dir %s" % Tmp)
-        Arc_Logs (Tmp, '_logs')
+        Globals.Tmp += '/s' + str(Globals.Stats['Session'])
+        if not os.path.isdir(Globals.Tmp) : 
+            try : os.mkdir(Globals.Tmp)
+            except: exit("Unable to Create tmp dir %s" % Globals.Tmp)
+        Logs.Arc_Logs (Globals.Tmp, '_logs')
         os.umask(0)
         Arc_File = "2arc2\_logs\_" + time.time()
         try:
@@ -299,20 +291,20 @@ def Init_Also(Util_only) :
             exit("Unable to create Arc_File %s" % Arc_File)
 
     # Set up log files...
-    XLog = Tmp+"/"+Main+r".log";
+    Globals.XLog = Tmp+"/"+Globals.Main+r".log";
     #!!!    &Read_Version;
     Msg = Get_Release_Info      # Sets $Version, etc or Aborts on error!
-    if not Quiet : print( "\n\n" )
-    if Stats['Session'] : Log_Str += "Session "+ Stats['Session']+": "
-    Log_Str += "Starting %s version %s at %s" % Main, TestData['Ver'], PT_Date(time.time(), 2)
-    Erc = Print_Log (1, Log_Str)
+    if not Globals.Quiet : print( "\n\n" )
+    if Globals.Stats['Session'] : Log_Str += "Session "+ Globals.Stats['Session']+": "
+    Log_Str += "Starting %s version %s at %s" % Globals.Main, Globals.TestData['Ver'], Util.PT_Date(time.time(), 2)
+    Globals.Erc = Util.Print_Log (1, Log_Str)
     Log_Str = ''
-    if Erc : Exit (3, "(%s)" % Xlog)
-    Print_Log (11,"This PID = %s, ShellPID = %s" % Stats['PID'], Stats['PPID'])
-    Print_Log (11, 'path = ' + abs_path (GP_Path))
-    for Module in( INC ) :
-        Vers = Version[fnstrip(Module, 7)]
-        Module  = INC[Module]  #Value (Full path / filename)
+    if Globals.Erc : Util.Exit (3, "(%s)" % Globals.Xlog)
+    Logs.Print_Log (11,"This PID = %s, ShellPID = %s" % Globals.Stats['PID'], Globals.Stats['PPID'])
+    Logs.Print_Log (11, 'path = ' + Util.abs_path (Globals.GP_Path))
+    for Module in( sys.modules['os']) :
+        Vers = Global.Version[fnstrip(Module, 7)]
+        Module  = sys.modules['OS'][Module]  #Value (Full path / filename)
         if Module[0:1] == '.' :
             Module = osos.getcwd() +  "/" + Module
         Log_Str = "Lib: " + Module

@@ -34,7 +34,10 @@ CVS_VER = ' [ CVS: $Id: PT.pm,v 1.9 2008/02/22 21:00:51 joe Exp $ ]';
 import sys
 import time
 import Globals
+from Globals import *
 import re
+import Stats
+import Logs
 
 #import psutil # will need a package  pip install psutil and ggc build of package, lots of pid utils
 
@@ -43,6 +46,7 @@ import re
 #__________________________________________________________________________________
 def exit(var):
     "Do a sys.exit()"
+    print(var)
     sys.exit(var)
     return
 
@@ -110,6 +114,27 @@ def Abort(Op):
 
         # Since every one of the above have an unconditional return ...
         Exit( 999, "Invalid call to \&Abort %s" %  Op )
+
+    return
+#__________________________________________________________________________
+def ASCIIColor(color='default'):
+    "Change the Ascii color if possible green:red:bold default no color"
+    attr = []
+    try: 
+        sys.stdout.isatty()
+        if color == "green" :
+            # green
+            attr.append('32')
+        elif color == "red":
+            # red
+            attr.append('31')
+        elif color == "bold":
+            attr.append('1')
+        else :
+            attr.append('0') # no color?
+    except: pass
+
+    print ( '\x1b[%sm' % ( ';'.join(attr) )  )
 
     return
 #__________________________________________________________________________
@@ -333,34 +358,34 @@ def Exit_TestExec( erc, Msg) :
     # ?? cat Msg to the $0 history log
     Erc = erc;    # Assign the global $Erc
     chomp(Msg)
-    if Erc :
+    if Globals.Erc :
         Type = 2
     else :
         Type = 1
 
-    if Stats['Status'] == 'Active'  :    # Remove any active tests
-        Stats['Status'] = 'Error' ;
+    if Globals.Stats['Status'] == 'Active'  :    # Remove any active tests
+        Globals.Stats['Status'] = 'Error' ;
 
     Stats.Update_All 
 
     if Erc == 198 :         # (PETC Abort)
-        print( "Bailing on Exit without logging...\n")
+        print( "Bailing on Exit without logging...")
         Abort('rm')
         exit(0)
 
-    if not Stats['Result'] == "PASS" : ASCIIColor('red')
-    if Stats['Result'] == "PASS" : ASCIIColor('green')
+    if not Globals.Stats['Result'] == "PASS" : ASCIIColor('red')
+    if Globals.Stats['Result'] == "PASS" : ASCIIColor('green')
     if Erc :
-        Log_Error(Msg)
+        Logs.Log_Error(Msg)
     else :
         if not Msg == '' :   Print_Log( Type, Msg ) 
 
     ASCIIColor('reset')
-    Log_History(2)
-    if not ERC == 107 : Stats.Session('delete')    # Release this session
-    if HA_Session and not HA_Session == 0 :
-        if not Erc == 107 and not opt_f : Stats.Session('delete',HA_Session)     # Release this HA session
-    exit(Erc)
+    Logs.Log_History(2)
+    if not Globals.Erc == 107 : Stats.Session('delete')    # Release this session
+    if Globals.HA_Session and not Globals.HA_Session == 0 :
+        if not Globals.Erc == 107 and not opt_f : Stats.Session('delete',HA_Session)     # Release this HA session
+    exit(Globals.Erc)
     return
 #____________________________________________________________________________
 def Get_INCs(List):
@@ -645,9 +670,9 @@ def PT_Sleep(Time):
 
 #________________________________________________________________
 def Read_Cfg_File(File):
-    "Sources parametric data from a file like:"
-    "logFile = /tmp/log.txt"
-    "Returns the # found"
+    """Sources parametric data from a file like:
+    logFile = /tmp/log.txt
+    Returns the # found """
     result = None
     try:
         if Globals.Debug : print("Read_Cfg_File trying to open: %s" % File)
@@ -655,37 +680,26 @@ def Read_Cfg_File(File):
             if Globals.Debug : print("Read_Cfg_File opened: %s" % File)
             for line in fh:
                 line = chomp(line) 
-                #if Globals.Debug : print("Read_Cfg_File line: %s" % line)
                 if not (line.strip().startswith("#") or  line == '') :  #Comment  or not re.search("^$", line) or re.search("^$", line)   re.search("^\s*\#"
-                    if Globals.Debug : print("Read_Cfg_File line clean: %s" % line)
-                    #Param = re.sub("\s+", '', Param)    #Remove any white spaces
-                    #Data  = re.sub("^\s+", '', Data)    #Remove any leading/trailing white spaces
-                    #Data  = re.sub("\s+$", '', Data)    #Remove any leading/trailing white spaces
-                    #if not Param == '' or not Param == 'CmdFilePath': 
-                    #if re.search("[(.*)]",line) :   #its a GlobalVar["name']
+                    if Globals.Verbose : print("Read_Cfg_File line clean: %s" % line)
                     if line.startswith("[") : result= re.search("\[(.*)\]",line)
                     if re.search("=",line): 
                         Param,Data = line.split("=")  #its a parm and a value for GlobalVar
                         Param = chomp(Param)
                         Data = chomp(Data)
-                        print (Param,Data)
-                        if result: 
-                            Globals.result.group(1)[Param]=Data
-                            print("Found Result",result.group(1),Param,Data)
-                        else: 
-                            Globals.GlobalVar[Param]=Data
-                        
-                    #if result : 
-                        #GlobalVarName = result.group(1)
-                        #if Globals.Debug : print( "Read_Cfg_File found GlobalVar Name: %s" % GlobalVarName ) 
-                            #Param1,Param2 = Data.split()
-                            #Globals.GlobalVar[Param1][Param2] = Data
-                        #else :
-                            #Globals.GlobalVar[Param] = Data
+                        if Globals.Verbose: print (Param,Data)
+                    if result:
+                        try:
+                            globals()[result.group(1)][Param] = Data
+                            if Globals.Verbose: print("Found Result",result.group(1),Param,Data)
+                        except:
+                            exit("Attempted to use undefined global: %s in Read_Cfg_File " % result.group(1))
+                    else: 
+                        Globals.GlobalVar[Param]=Data
     except:
         print("Read_Cfg_File failed to read %s" % File)
+        
         return (1)
-    print (Globals.joe['DefFanSpeed'])
     fh.close()
     return (0)
 #________________________________________________________________
@@ -769,16 +783,15 @@ def Show(Var):
     return
 
 #__________________________________________________________________________________
-def Show_INCs(): 
+def Show_INC(): 
     "# Pulled from Init"
 
     if Debug :
-        print ("OS = %s\n" % OS)
-        for i in INC :
+        print ("OS = %s\n" % Globals.OS)
+        for i in sys.modules['os'] :
             if not  "perl" :  print( "%s\n" % i ) 
             print("\nNew Files ( warmer than 30 mins ):\n\n")
-    for Key  in INC : 
-        File = INC[Key]
+    for File in sys.modules['os'] : 
         Old = int ( (os.path.getmtime(File) * 24 * 60) + 0.5) # Mins old
         if not Old > 30 : print ("%s [%s mins]\n" % File,Old )
 

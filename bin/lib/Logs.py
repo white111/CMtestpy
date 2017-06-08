@@ -38,14 +38,15 @@ import sys
 import Globals
 import Util
 import Logs
+import Stats
 
 #What to use here for python?
 #use Time::HiRes qw(gettimeofday tv_interval);
 #use Term::ANSIColor;
 #__________________________________________________________________________
 def Arc_Logs (Path, Label) :
-     "Alternative to Rotate_Logs, creates a folder based on the creation date of \
-     the first file arc'd, and moves any files(not dirs) found to the new sub-dir."
+     """Alternative to Rotate_Logs, creates a folder based on the creation date of 
+     the first file arc'd, and moves any files(not dirs) found to the new sub-dir.
 
      Move = 'mv'
      Delete = 'rm -f'
@@ -53,8 +54,9 @@ def Arc_Logs (Path, Label) :
      To 
      fh 
      Arc_File
+     """
 
-     if os.name == 'NT' : 
+     if Globals.OS == 'NT' : 
           Move = 'ren'
           Delete = 'del'
 
@@ -200,47 +202,27 @@ def Log_Cfg_Record(OpID, Sys_ID, Slot, PN, SN):
      File_Close (OUT);
      return
 #__________________________________________________________________________
-def ASCIIColor(color='default'):
-     "Change the Ascii color if possible green:red:bold default no color"
-     attr = []
-     try: 
-          sys.stdout.isatty()
-          if color == "green" :
-               # green
-               attr.append('32')
-          elif color == "red":
-               # red
-               attr.append('31')
-          elif color == "bold":
-               attr.append('1')
-          else :
-               attr.append('0') # no color?
-     except: pass
 
-     print ( '\x1b[%sm' % ( ';'.join(attr) )  )
-
-     return
-#__________________________________________________________________________
 def Log_Error(Msg):
      "An error just occured, log it!"
 
-     TestData['TOLF'] = int(time.time()) #epoch time;      # Time of Last Failure
-     Errors[0] +=1
-     Errors[1] +=1
-     TestData['TEC'] +=1
-     Stats['Result'] = 'FAIL';
+     Globals.TestData['TOLF'] = int(time.time()) #epoch time;      # Time of Last Failure
+     Globals.Errors[0] +=1
+     Globals.Errors[1] +=1
+     Globals.TestData['TEC'] +=1
+     Globals.Stats['Result'] = 'FAIL';
 
-     if TestData['TTF'] == '': # Only the first time
-          TestData['TTF'] = TestData['TOLF'] - Stats['TimeStamp']
+     if Globals.TestData['TTF'] == '': # Only the first time
+          Globals.TestData['TTF'] = Globals.TestData['TOLF'] - Globals.Stats['TimeStamp']
 
      Stats.Update_All;
-     ASCIIColor('red') 
+     Util.ASCIIColor('red') 
      Print_Log (2, 'Log_Error: ' + Msg);
      #Added JSW 051906 Adding Error Messages to XML file
      Print_Out_XML_Tag("Error")
      Print_Out( '		Log_Error: ' + Msg);
      Print_Out_XML_Tag();
-     ASCIIColor('reset');
+     Util.SCIIColor('reset');
      if (Exit_On_Error) :
           Exit_On_Error_Count -= 1
           # THis must be Erc=0 to avoid dancing forever with $Exit
@@ -344,11 +326,12 @@ def Log_History(Type):
 
      # This next one needs to be a 'die' since &Exit will &Log_History!
      try :
+          if Globals.Debug : print("Log_History trying to open: %s" % LogFile)
           LOG = open(LogFile, 'r+')  
-          LOG.write(Msg+r"\n")
+          LOG.write(Msg+'\n')
           LOG.close()
-     finally:
-          sys.exit("Can\'t open History file: " + LogFile )
+     except:
+          exit("Can\'t open History file: " + LogFile )
 
      return (0);
 #________________________________________________________________________________________
@@ -463,51 +446,51 @@ def Log_MAC_Record(Product_ID, MAC_Addr):
 
      return (0);
 #__________________________________________________________________________________
-def Print2XLog(Msg, DontPrint2Screen, NoNewLine, TagAsError): 
+def Print2XLog(Msg="", DontPrint2Screen=0, NoNewLine=0, TagAsError=0): 
      "Print a line to the execution log # Replacement for Print_Log"
 
      #!!! Find out whos calling with $NoNewLine set, and who cant just use Global Quiet the same as everyone else!!
-     MSG.readline().rstrip  # chomp return to make sure we do not have two
+     Msg.rstrip  # chomp return to make sure we do not have two
      # perl not converting  see if needed  or fix my $EOL_Ch = ($NoNewLine) ? '' : "\n";
      EOL_Ch = r"\n"
-     if not Quiet or not DontPrint2Screen : print(Msg + EOL_Ch) 
-     Run_Time = Start_Time  # Also at PT2.pm
+     if not Globals.Quiet or not DontPrint2Screen : print(Msg + EOL_Ch) 
+     Globals.Run_Time = Globals.Start_Time  # Also at PT2.pm
 
      # Tagging the date after so many minutes DOES NOT WORK (yet)
      ReDate = 2; # Time stamp every $ReDate sec
-     Last_Log_Interval = int(time.time()) - Last_Log_Time; #epoch time
+     Last_Log_Interval = int(time.time()) - Globals.Last_Log_Time #epoch time
      if TagAsError :
-          Tag = "ERR " + Erc+ ":"
+          Tag = "ERR " + Globals.Erc+ ":"
      else:
           Tag = '   '
-     if Last_Log_Interval > ReDate : TimeField = PT_Date(int(time.time()), 2) 
+     if Last_Log_Interval > ReDate : TimeField = Util.PT_Date(int(time.time()), 2) 
      else: "\t" + print("%.3f", Run_Time)
 
-     if Msg.lower.startswith("done") : return (0) 
+     if Msg.startswith("done") : return (0) 
 
-     if not New_Log : #!!! Required for Win32 - otherwise really slow! (Opened in Yield.pl)
+     if not Globals.New_Log : #!!! Required for Win32 - otherwise really slow! (Opened in Yield.pl)
           try :
-               LOG = open(Xlog, 'r+') 
+               LOG = open(Globals.XLog, 'r+') 
                return (3)
-          finally: 
-               Exit (1, "Can\'t open "+LOG+" for append")          
+          except: 
+               Util.Exit(1, "Can\'t open "+Globals.XLog+" for append")          
 
      LOG.write(TimeField+":\t"+Tag+"\t"+Msg+"\n")
-     if not New_Log :
+     if not Globals.New_Log :
           LOG.close
 
 
-     Last_Log_Time = int(time.time()) #epoch time
+     Globals.Last_Log_Time = int(time.time()) #epoch time
 
      return (0);
 
 #__________________________________________________________________________________
-def Print_Log(Mode, Msg):
-     "obsolete! use Print2XLog instead"
+def Print_Log(Mode=0, Msg=""):
+     """obsolete! use Print2XLog instead"""
 
-     if Mode[-1:] == 2 : TagAsError = 1
+     if Mode > 11 : TagAsError = 1
      else : TagAsError = 0
-     DontPrint2Screen = Mode[-2]
+     DontPrint2Screen = Mode
 
      RC = Print2XLog(Msg, DontPrint2Screen, 0, TagAsError);
 

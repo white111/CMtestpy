@@ -33,6 +33,8 @@ if not "CMtestVersion" in globals() : CMtestVersion={}
 CMtestVersion['Stats'] = VER + CVS_VER
 #import Globals
 #from lib.Globals import *
+import Globals
+import os
 
 #__________________________________________________________________________________
 def Read(Stats_File):
@@ -59,13 +61,12 @@ def Read(Stats_File):
         return
 #__________________________________________________________________________________
 def Session(Op):  #Sess=Stats['Session']
-        global Stats
-        if not Stats_Path : exit( "Stats_Path not defined! Did testctrl.cfg get sourced??")
+        
+        if not Globals.GlobalVar["Stats_Path"] : exit( "Stats_Path not defined! Did testctrl.cfg get sourced??" + Globals.GlobalVar["Stats_Path"])
            
-        File = Stats_Path + '/system/' + Stats['Host_ID'] + '-'
-        FileName = File + Stats['Session']
-        UMask = os.umask()
-        os.umask(0)
+        File = Globals.GlobalVar["Stats_Path"] + '/system/' + Globals.Stats['Host_ID'] + '-'
+        FileName = File + str(Globals.Stats['Session'])
+        UMask = os.umask(0)
         Done = 0
         if Op == 'delete' :
                 try:
@@ -73,10 +74,10 @@ def Session(Op):  #Sess=Stats['Session']
                 except OSError:
                         pass
         if Op == 'next' :
-                Stats['Session'] = 1
-                while (os.path.exsists(File + Stats['Session']) or Done) :
-                        Stats['Session'] += 1
-                        FileName = File + Stats['Session']
+                Globals.Stats['Session'] = 1
+                while (os.path.isfile(File + str(Globals.Stats['Session'])) or Done) :
+                        Globals.Stats['Session'] += 1
+                        FileName = File + Globals.Stats['Session']
                         try:
                                 Erc = open(FileName, 'a').close() # touch
                                 Erc = os.chmod(FileName, stat.S_IRWXO) # chmod 777 $FileName"
@@ -93,20 +94,18 @@ def Session(Op):  #Sess=Stats['Session']
                 Tag = '>';
                 Done = 1
 
-
-        o
-
         if Op == 'read': 
                 try:
                         STATS = open(Tag +FileName)
                         PID = STATS
+                        STATS.close
                         return (PID)
                 except:
                         Exit (8, "Can\'t open Stats File: %s for %s" % File,Op)
         else :
-                print("STATS %s" % Stats['PID'])
+                print("STATS %s" % Globals.Stats['PID'])
 
-        STATS.close
+        
         os.umask(UMask)
 
         return (0)
@@ -148,8 +147,8 @@ def  Write ():
         Host_ID       = Host_ID
         LogSN     = LogSN
 
-        File1 = Stats_Path+ "/" + Host_ID + '-' + getppid + '.txt'
-        File2 = Stats_Path + "/" + Stats['UUT_ID'] + '.txt'
+        File1 = Globals.GlobalVar["Stats_Path"]+ "/" + Host_ID + '-' + getppid + '.txt'
+        File2 = Globals.GlobalVar["Stats_Path"] + "/" + Globals.Stats['UUT_ID'] + '.txt'
 
         if Stats['UUT_ID'] == '' :
                 Stats_File = File1
@@ -160,7 +159,7 @@ def  Write ():
                         
                 Stats_File = File2;
 
-        if not os.path.isdir(Stats_Path) : Stats_File = Tmp+ "/" + TmpStats.txt   #For early debug!: 
+        if not os.path.isdir(Globals.GlobalVar["Stats_Path"]) : Stats_File = Globals.Tmp+ "/" + TmpStats.txt   #For early debug!: 
         try :
                 STATS = open(Stats_File, 'w')
                 STATS.write( "\n[Stats]\n")
