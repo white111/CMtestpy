@@ -117,9 +117,10 @@ def main():
 
     OS = os.name
     if os.name == "nt":
-        OS = "NT"
+        Globals.OS = "NT"
     else:
-        OS = "Linux"
+        Globals.OS = "Linux"
+    if Globals.Debug  : print ("Detected OS: %s " % Globals.OS)    
         
 
     
@@ -129,16 +130,17 @@ def main():
     if Globals.Debug > 0 : print ("OS path detected is: %s " % PPATH)
     if PPATH == '': PPATH = ".."
 
-    if OS == "NT":
-        Cfg_File = PPATH + r"\cfgfiles\testctrl.defaults.cfg"
+    if Globals.OS == "NT":
+        Globals.Cfg_File = PPATH + r"\cfgfiles\testctrl.defaults.cfg"
         #Globals[LogPath] = "\Logs"
         TmpDir = expanduser("~")
-        if Globals.Debug > 0 : print ("Config path detected is: %s " % Cfg_File)
+        
     else:
-        Cfg_File = '/usr/local/cmtest/testctrl.cfg'
+        Globals.Cfg_File = '/usr/local/cmtest/testctrl.cfg'
         #Globals[LogPath] = r"/var/local/cmtest/logs"
         TmpDir = expanduser("~") + "/tmp"  
-
+        
+    if Globals.Debug  : print ("Config path detected is: %s " % Globals.Cfg_File)
     #if OS == 'nt':
         #Cfg_File = PPath + "/" + "cfgfiles/testctrl.defaults.cfg"
         #Tmp = os.getenv('TMP', "NO_TMP")
@@ -147,7 +149,7 @@ def main():
         #Tmp = os.getenv(expanduser("~") + "/tmp", "NO_TMP")
 
 
-    CmdFilePath = r"../" + PPATH +r"/cmdfiles"
+    Globals.CmdFilePath = r"../" + PPATH +r"/cmdfiles"
 
     Logs.ASCIIColor('reset')
 
@@ -194,16 +196,16 @@ def _Init():
     #else we are NT
     print ("Debug in _Init %i" % Globals.Debug)
     Init.Init_All (0)
-    Erc = 101
-    Force = options.Force
-    Erc = 0
+    Globals.Erc = 101
+    Globals.Force = options.Force
+    Globals.Erc = 0
     Init_Also (0)
     return
 #____________________________________________________________________________________
 def _catch_zap(): 
     global shucks; shucks +=1
     Power ('OFF');
-    Stats['Status'] = 'Aborted';
+    Globals.Stats['Status'] = 'Aborted';
     Exit(998,"<Ctrl>-C Aborted");
 
 #____________________________________________________________________________________

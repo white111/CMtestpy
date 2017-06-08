@@ -159,7 +159,7 @@ global GlobalVar; GlobalVar = {   # Globals Dictionary will use to replace perl 
             "CmdFilePath"     : 21,
             "HashDefPath"     : 21,
             "Location"        : 21,
-            "LogPath"         : 21,  # usually /var/local/cmtest/logs from testctrl.cfg
+            "LogPath"         : "",  #21 usually /var/local/cmtest/logs from testctrl.cfg
             "LogPathLocal"          : 21,
             "Out_File"        : 0,
             "PC_IP1"          : 0,

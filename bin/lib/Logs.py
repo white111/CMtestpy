@@ -35,7 +35,9 @@ from os import listdir
 from os.path import isfile, join
 import time
 import sys
-#import Globals
+import Globals
+import Util
+import Logs
 
 #What to use here for python?
 #use Time::HiRes qw(gettimeofday tv_interval);
@@ -322,15 +324,15 @@ def Log_Event_Record(OpID, PN, SN, TID, Result, Ptr):
 
 def Log_History(Type):
      "Log script start / end activity "
-
-     LogFile = LogPath + PathSep + history.log
-     Msg = PT_Date(int(time.time()), 1) + ":\t"+Stats['TimeStamp']
-     Msg += "\t"+Op_ID+"\t"+Stats['Host_ID']
-     if Stats['Session']: Msg += "-"+Stats['Session'] 
+     
+     if Globals.GlobalVar['LogPath'] == '' : sys.exit( Globals.GlobalVar['LogPath']+" not defined in: "+ "Log_History")
+     LogFile = Globals.GlobalVar['LogPath'] + Globals.PathSep + "history.log"
+     Msg = Util.PT_Date(str(time.time()), 1) + ":\t"+str(Globals.Stats['TimeStamp'])
+     Msg += "\t"+Globals.Op_ID+"\t"+Globals.Stats['Host_ID']
+     if Globals.Stats['Session']: Msg += "-"+Globals.Stats['Session'] 
      Msg += "\t"
 
-     if LogPath == '' : sys.exit( LogPath+" not defined in: "+Logs.Log_History)
-
+     
      #perl  SWITCH: {Why needed ? in a loop see perl last 
      if Type == 1 :
           Msg += "Starting $Main ... "   #; last SWITCH; }

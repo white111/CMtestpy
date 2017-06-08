@@ -172,7 +172,7 @@ def Get_Release_Info():
     else: return("No version")
 
 #__________________________________________________________________________
-def Init_All(Util_only):
+def Init_All(Util_only=0):
     " This is the 1st Init stage, done before getopts,"
     "usually called at the beginning of &main::Init"
     if Globals.Debug : print("In sub Function %s" % __name__)
@@ -224,34 +224,35 @@ def Init_All(Util_only):
 # end [acquired]
 
     try: 
-        os.path.isdir(Tmp) # $Tmp is declared in $Globals
+        os.path.isdir(Globals.Tmp) # $Tmp is declared in $Globals
         try:
-            os.path.isfile(Tmp)
+            os.path.isfile(Globals.Tmp)
         except:
-            exit("Attempting to create \%s: file %s exists!" % Tmp, Tmp)
+            exit("Attempting to create \%s: file %s exists!" % Globals.Tmp, Globals.Tmp)
     except:
         try:
-            os.mkdir(Tmp)
+            os.mkdir(Globals.Tmp)
         except:
-            exit("Can\'t create tmp directory %s" % Tmp)
-    print("Debug in Init all:%i" % Debug)
-    if Debug : Print("Run config read with %s" % Cfg_File)
+            exit("Can\'t create tmp directory %s" % Globals.Tmp)
+    if Globals.Debug : print("Debug in Init all:%s" % Globals.Debug)
+    if Globals.Debug and not os.path.isfile(Globals.Cfg_File) : print("Debug: Run config read with %s" % Globals.Cfg_File)
     if not Util_only:         # Required for test oriented scripts only ...
         try: 
-            os.path.isfile(Cfg_File)
-            First_Time 
-            if Debug : Print("Run config read with %s" % Cfg_File)
-            Erc = Util.Read_Cfg_File(Cfg_File)  # $Cfg_File is defined in main:: BEGIN block
-            if Erc: exit("Init died with Erc=%s trying to read Cfg_File \'%s\'" % Erc, Cfg_File)                # NB: No Erc translation yet!
-        except:     
-            if os.path.isfile(Cfg_File):
-                exit("Cfg_File:%s doesn\'t exist" % Cfg_file)    # Temporary, until ...
+            if Globals.Debug : print("Run config read with %s" % Globals.Cfg_File)
+            os.path.isfile(Globals.Cfg_File)
+            First_Time
+            Globals.Erc = Util.Read_Cfg_File(Globals.Cfg_File)  # $Cfg_File is defined in main:: BEGIN block
+            if Globals.Erc: exit("Init died with Erc=%s trying to read Cfg_File \'%s\'" % Globals.Erc, Globals.Cfg_File) 
+        except:
+            if Globals.Debug : print("exit Run config read with %s" % Globals.Cfg_File)
+            if not os.path.isfile(Globals.Cfg_File):
+                exit("Cfg_File:%s doesn\'t exist" % Globals.Cfg_File)    # Temporary, until ...
 
-        Erc = Logs.Log_History(1)
-        if Erc : exit("Init died with Erc=%s trying to open History log" % Erc)
+        Globals.Erc = Logs.Log_History(1)
+        if Globals.Erc : exit("Init died with Erc=%s trying to open History log" % Globals.Erc)
 
         #!! Check to make sure that GUID is set
-        TestLogPath = LogPath+"/logfiles"
+        TestLogPath = Globals.LogPath+"/logfiles"
         if not os.path.isdir(TestLogPath) :
             Exit(999, "No permenant log file path >%s<" % TestLogPath)
         return

@@ -33,8 +33,9 @@ CVS_VER = ' [ CVS: $Id: PT.pm,v 1.9 2008/02/22 21:00:51 joe Exp $ ]';
 #import lib.Logs
 import sys
 import time
-#import Globals
+import Globals
 import re
+
 #import psutil # will need a package  pip install psutil and ggc build of package, lots of pid utils
 
 # Python use Term::ANSIColor;
@@ -160,10 +161,12 @@ def xChk_Sub(Sub):
 #__________________________________________________________________________________
 def chomp(x) :
     "Remove return or line feed from end of line like perl"
-
-    if x.endswith("\r\n"): return x[:-2]
-
-    if x.endswith("\n"): return x[:-1]
+    x = x.rstrip()
+    x = x.strip()
+    x = x.strip("\t")
+    x = x.strip(' \t\n\r') 
+    #if x.endswith("\r\n"): return x[:-2]
+    #if x.endswith("\n"): return x[:-1]
 
     return x[:]
 #__________________________________________________________________________________
@@ -501,7 +504,7 @@ def NDT():
     return ( PT_Date( int(time.time()), 9 ) );
 
 #__________________________________________________________________________________
-def Pad(Orig_Str, Len_Int, Pad_Str, Where):
+def Pad(Orig_Str="", Len_Int=0, Pad_Str=' ', Where=0):
     " Return a string with things added (<sp> default)"
     "# $Where = 1 pads on the right (Default)"
     "#          2 on the left"
@@ -509,7 +512,7 @@ def Pad(Orig_Str, Len_Int, Pad_Str, Where):
     "# original string in a new string $Len_Int long"
 
     if Pad_Str == '': Pad_Str = ' ' 
-
+    
     while ( len(Orig_Str) < Len_Int ) :
         if Where == 2  :
             Orig_Str = Pad_Str + Orig_Str
@@ -519,7 +522,7 @@ def Pad(Orig_Str, Len_Int, Pad_Str, Where):
         else :
             Orig_Str = Orig_Str + Pad_Str
 
-    while ( length(Orig_Str) > Len_Int ) :
+    while ( len(Orig_Str) > Len_Int ) :
         chop(Orig_Str)
 
     return (Orig_Str)
@@ -613,24 +616,24 @@ def PT_Date(Time=int(time.time()), Type=0):
 
     #perl ( $Nsec, $Nmin, $Nhour, $Nmday, $Nmon, $Nyear, $Nwday, $Nyday, $Nisdst ) = localtime($Time);
     tm_year, tm_mon, tm_mday, tm_hour, tm_min, tm_sec, tm_wday, tm_yday, tm_isdst = time.localtime()
-    tm_mon = Pad( tm_mon, 2, '0', 2 )
-    tm_mon = Pad( tm_mday, 2, '0', 2 )
-    tm_mon = Pad( tm_hour, 2, '0', 2 )
-    tm_mon = Pad( tm_min, 2, '0', 2 )
-    tm_mon = Pad( tm_sec, 2, '0', 2 )
+    tm_mon = Pad( str(tm_mon), 2, '0', 2 )
+    tm_mon = Pad( str(tm_mday), 2, '0', 2 )
+    tm_mon = Pad( str(tm_hour), 2, '0', 2 )
+    tm_mon = Pad( str(tm_min), 2, '0', 2 )
+    tm_mon = Pad( str(tm_sec), 2, '0', 2 )
 
 
-    Date_Str[0] = tm_year+"/"+tm_mon+"/"+tm_mday+" "+tm_hour+"\:"+tm_min
-    Date_Str[1] = tm_mon+"/"+tm_mday+" "+tm_hour+"\:"+tm_min
-    Date_Str[2] = Date_Str[1] + ":" + tm_sec
-    Date_Str[6] = tm_mon+"/"+tm_mday+"/"+ + re.sub( 2, 2, tm_year )
-    Date_Str[8] = tm_year+"-"+tm_mon+"-"+tm_mday                      #New!
-    Date_Str[9] = tm_year+tm_montm_mday+"\."+tm_hourtm_mintm_sec
+    Date_Str[0] = str(tm_year)+"/"+str(tm_mon)+"/"+str(tm_mday)+" "+str(tm_hour)+"\:"+str(tm_min)
+    Date_Str[1] = str(tm_mon)+"/"+str(tm_mday)+" "+str(tm_hour)+"\:"+str(tm_min)
+    Date_Str[2] = Date_Str[1] + ":" + str(tm_sec)
+    Date_Str[6] = str(tm_mon)+"/"+str(tm_mday)+"/"+ str(tm_year )[2:4]   # last two dig of 4 dig year
+    Date_Str[8] = str(tm_year)+"-"+str(tm_mon)+"-"+str(tm_mday)                      #New!
+    Date_Str[9] = str(tm_year)+str(tm_mon)+str(tm_mday)+"\."+str(tm_hour)+str(tm_min)+str(tm_sec)
 
     if Type == "[0-2689]" :
         return ( Date_Str[Type] )
     else:
-        return (int(time.time()))
+        return (str(time.time()))
 #__________________________________________________________________________________
 def PT_Sleep(Time):
     "Sleep for x seconds"
@@ -645,38 +648,57 @@ def Read_Cfg_File(File):
     "Sources parametric data from a file like:"
     "logFile = /tmp/log.txt"
     "Returns the # found"
+    result = None
     try:
-        with open (File, r) as fh :
+        if Globals.Debug : print("Read_Cfg_File trying to open: %s" % File)
+        with open (File, 'r') as fh :
+            if Globals.Debug : print("Read_Cfg_File opened: %s" % File)
             for line in fh:
-                if re.search("^\s*\#", line): next #Comment
-                if re.search("^$", line): next # Blank line
-                chomp()
-                Param = re.sub("\s+", '', Param)    #Remove any white spaces
-                Data  = re.sub("^\s+", '', Data)    #Remove any leading/trailing white spaces
-                Data  = re.sub("\s+$", '', Data)    #Remove any leading/trailing white spaces
-                if Param == '' : next 
-                if Param == 'CmdFilePath' : next 
-                if re.search("\w+\s*\[\d+\]",Param) : 
-                    Param1,Param2 = Data.split()
-                    Global[Param1][Param2] = Data
-                else :
-                    Global[Param] = Data
+                line = chomp(line) 
+                #if Globals.Debug : print("Read_Cfg_File line: %s" % line)
+                if not (line.strip().startswith("#") or  line == '') :  #Comment  or not re.search("^$", line) or re.search("^$", line)   re.search("^\s*\#"
+                    if Globals.Debug : print("Read_Cfg_File line clean: %s" % line)
+                    #Param = re.sub("\s+", '', Param)    #Remove any white spaces
+                    #Data  = re.sub("^\s+", '', Data)    #Remove any leading/trailing white spaces
+                    #Data  = re.sub("\s+$", '', Data)    #Remove any leading/trailing white spaces
+                    #if not Param == '' or not Param == 'CmdFilePath': 
+                    #if re.search("[(.*)]",line) :   #its a GlobalVar["name']
+                    if line.startswith("[") : result= re.search("\[(.*)\]",line)
+                    if re.search("=",line): 
+                        Param,Data = line.split("=")  #its a parm and a value for GlobalVar
+                        Param = chomp(Param)
+                        Data = chomp(Data)
+                        print (Param,Data)
+                        if result: 
+                            Globals.result.group(1)[Param]=Data
+                            print("Found Result",result.group(1),Param,Data)
+                        else: 
+                            Globals.GlobalVar[Param]=Data
+                        
+                    #if result : 
+                        #GlobalVarName = result.group(1)
+                        #if Globals.Debug : print( "Read_Cfg_File found GlobalVar Name: %s" % GlobalVarName ) 
+                            #Param1,Param2 = Data.split()
+                            #Globals.GlobalVar[Param1][Param2] = Data
+                        #else :
+                            #Globals.GlobalVar[Param] = Data
     except:
+        print("Read_Cfg_File failed to read %s" % File)
         return (1)
-
+    print (Globals.joe['DefFanSpeed'])
     fh.close()
     return (0)
 #________________________________________________________________
 def Read_Data_File(File):
     " Might have been written by &Write_Data_File"
 
-    Erc, Data  = DataFile_Read(File)
+    Global.Erc, Data  = DataFile_Read(File)
     if not Erc : return (0) 
-    if Erc == 1 :
+    if Global.Erc == 1 :
         PrintLog ("Unable to read Data File: %s" % File);
         return (2)
-    elif Erc :
-        Exit (Erc, "Attempt to load undefined var: %s" % Data);
+    elif Global.Erc :
+        Exit (Global.Erc, "Attempt to load undefined var: %s" % Data);
 
     return (0)
 
