@@ -111,6 +111,7 @@ def main():
     Globals.Menu1 = options.Menu1
     Globals.Session = options.Session
     Globals.SessionForce = options.Force
+    Globals.Force = options.Force
     Globals.UserID = options.User
     Globals.Out_File = options.Output
     Globals.Loop_overide = options.Loop
@@ -151,7 +152,7 @@ def main():
 
     Globals.CmdFilePath = r"../" + PPATH +r"/cmdfiles"
 
-    Logs.ASCIIColor('reset')
+    Util.ASCIIColor('reset')
 
     _Init()
     GUI = 0
@@ -197,9 +198,9 @@ def _Init():
     print ("Debug in _Init %i" % Globals.Debug)
     Init.Init_All (0)
     Globals.Erc = 101
-    Globals.Force = options.Force
+   
     Globals.Erc = 0
-    Init_Also (0)
+    Init.Init_Also(0)
     return
 #____________________________________________________________________________________
 def _catch_zap(): 
