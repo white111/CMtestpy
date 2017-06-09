@@ -42,6 +42,7 @@ import getpass
 import datetime
 #import os.environ
 import os
+import os.path
 import time
 
 
@@ -112,9 +113,13 @@ global Stats; Stats           = {                     # Used by the Stats mechan
             'UUT_ID'     : ''                   # Primary Serial no to be used for logging purposes
         }
 
-global Stats_Path; 
-Stats_Path      = ''
-global Tmp; Tmp             =  "$Home/tmp"
+global Stats_Path; Stats_Path      = ''
+global PathSep; 
+if os.name == "nt" : PathSep = "\\" 
+else: PathSep = "/"
+global FileTmpDir; FileTmpDir = os.path.expanduser("~") + PathSep + "cmtestmp" #  Tmp             =  "$Home/tmp"
+
+                
 
 global TestData; TestData = {
             'ATT'        : 0,                   # Actual Test Time (excl. wait time) (secs)
@@ -166,7 +171,7 @@ global GlobalVar; GlobalVar = {   # Globals Dictionary will use to replace perl 
             "PC_IP2"          : 0,
             "Power_Switch_IP" : 0,
             "Power_Switch2_IP" : 0,
-            "Stats_Path"      : 21,
+            "Stats_Path"      : "",  # Usually /var/local/cmtest/stats
             "UUT_IP_Base"     : 21,
             "UUT_IP_Range"    : 21,
             "User"            :21,
@@ -176,7 +181,6 @@ global Menu_List;Menu_List = {};
 global Menu_Desc;Menu_Desc = {};
 global Menu_Cmd;Menu_Cmd  = {};
 global GP_Path; GP_Path ="none"
-
 global Util_only;  Util_only = 0
 global UserID; UserID = "none"
 global Out_File; Out_File = "" # optional -O ouput xml file
@@ -186,10 +190,25 @@ global Loop_Time;Loop_Time       = 0;        # ATT inside of the loop cycle
 global LBuffer;LBuffer         = ();       # Loop buff
 global Caching; Caching         = 0;        # Set by a <Loop> cmd, unset by </Loop>
 #    our $Retry_Count     = 0;        # Set by a <Retry> cmd, unset by </Retry>
-global PathSep; 
-if os.name == "nt" : PathSep = "\\" 
-else: PathSep = "/"
+
 #print(globals())
+
+#Finds during Debug
+global GP_Path
+global Cg_File
+global Pid
+global Run_Time ;  Run_Time =0
+global Start_Time ; Start_Time = 0
+global Last_Log_Interval; Last_Log_Interval = 0
+global Last_Log_Time ; Last_Log_Time = 0 #epoch tim
+global New_Log; New_Log = 1  # Will by pass some stuff
+
+#From FileOp
+global File; File  = []         #List of Files and directory paths
+global  Dir_List; Dir_List  = []    # List of (sub)dirs in a spec'd dir (&File_List)
+global File_List; File_List = []    # List of files in a spec'd dir (&File_List)
+#global FH; FH = 'FH00'      # The nested (recursive) File Handle
+
 print ("Globals init .. Done:%i" % Debug)
                 #return
 #__________________________________________________________________________

@@ -159,7 +159,7 @@ def  Write ():
                         
                 Stats_File = File2;
 
-        if not os.path.isdir(Globals.GlobalVar["Stats_Path"]) : Stats_File = Globals.Tmp+ "/" + TmpStats.txt   #For early debug!: 
+        if not os.path.isdir(Globals.GlobalVar["Stats_Path"]) : Stats_File = Globals.FileTmpDir+ "/" + TmpStats.txt   #For early debug!: 
         try :
                 STATS = open(Stats_File, 'w')
                 STATS.write( "\n[Stats]\n")

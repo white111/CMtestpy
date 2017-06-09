@@ -40,10 +40,7 @@ import zlib #CRC32 Checksum
 import collections
 import re
 import sys
-global File; File  = []         #List of Files and directory paths
-global  Dir_List; Dir_List  = []    # List of (sub)dirs in a spec'd dir (&File_List)
-global File_List; File_List = []    # List of files in a spec'd dir (&File_List)
-global FH; FH = 'FH00'      # The nested (recursive) File Handle
+import Globals
 
 #__________________________________________________________________________________
 def fnstrip(Full_FN="", Specifier=9) :
@@ -77,30 +74,29 @@ def fnstrip(Full_FN="", Specifier=9) :
         return ( os.getcwd() )
 
 #__________________________________________________________________________________
-def File_List (str1=".",No_Recurse=0):
-    "Update Global Dir_List and File_list and returns a count of files in directory"
+def File_List (File_Path=".",No_Recurse=0):
+    """Update Global Dir_List and File_list and returns a count of files in directory
     #    Updates:
     #       our @Dir_List  - List of (sub)dirs in a spec'd dir (&File_List)
     #       our @File_List - List of files in a spec'd dir (&File_List)
-
-
-    File_Path = str1
-    if File_Path == '' : File_Path = '.'
-    No_Recurse = str2
-    Dir_List += os.listdir(str1)
-    File_List = os.listdir
-    Dir_list = os.walk
-
-    for root, dirs, files in os.walk(r'/temp/joe'):
-        if Debug : print(root, "consumes ", end="")
-        if Debug : print(sum([getsize(join(root, name)) for name in files]), end="")
-        if Debug : print("bytes in ", len(files), "non-directory files")
-        if 'CVS' in dirs: dirs.remove('CVS')  # don't visit CVS directories
-        if No_Recurse : break
-
-    Count = len(files)
-
-    return (Count);
+    """
+    Globals.File_List = ''
+    count = 0
+    try:
+        Globals.Dir_List = os.listdir(File_Path)
+        for root, dirs, files in os.walk(File_Path):
+            if Debug : print(root, "consumes ", end="")
+            if Debug : print(sum([getsize(join(root, name)) for name in files]), end="")
+            if Debug : print("bytes in ", len(files), "non-directory files")
+            Globals.File_List.append(files)
+            if 'CVS' in dirs: dirs.remove('CVS')  # don't visit CVS directories
+            if '.git' in dirs: dirs.remove('.git')  # don't visit Git directories
+            if No_Recurse : break
+            Count += 1
+            return (Count);
+    except:
+        exit("Unable to process File_Path: %s in FileList" % File_Path)
+        return(0)
 #_______________________________________________________________________________
 def File_Checksum (fileName) :
     " Return CRC32 checksum of file"
@@ -152,7 +148,7 @@ def Get_File_Stats (File='') :
     ' Originally &Show_Files_Attrs__Get_Stats for \
     ( $Date, $Size, $DateStr, $MIA ) = &Get_File_Stats ("$Dir1/$Name")'
 
-    for root, dirs, files in os.walk(r'/temp/joe'):
+    for root, dirs, files in os.walk(File):
         if Debug : print(root, "consumes ", end="")
         if Debug : print(sum([getsize(join(root, name)) for name in files]), end="")
         if Debug : print("bytes in ", len(files), "non-directory files")
@@ -200,12 +196,12 @@ def Show_File_Attrs(Dir1, Dir2, File2do):
     Files2 = []    # !!!WTF are these used for?
     try:
         for index in range( len(Files)) :
-            Files1.append( Dir1 + "/" + index)
-            if ((opt_s and WWW_Path  != '') and Dir1.find(r"/www/")) :
+            Files1.append( Dir1 + Globals.PathSep + index)
+            if ((opt_s and WWW_Path  != '') and Dir1.find(Globals.PathSep + "www" +Globals.PathSep)) :
                 Files2.append(WWW_Path,index)  # Modified for Site server WWW files
                 if Debug : print ("Show file attr push", Files2, WWW_Path,index)
             else :
-                Files2.append(Dir2,r"/",indesx)   # original JSW
+                Files2.append(Dir2,Globals.PathSep,indesx)   # original JSW
             FileList[index] = 1
     finally: 
         Files1 = Show_Files_Attrs__Get_Files(Dir1)
@@ -262,21 +258,21 @@ def Show_File_Attrs(Dir1, Dir2, File2do):
     Name = collections.OrderedDict(FileList.items())
     for index in Name : 
         Msg   = ''
-        Date1, Size1, DS1, MIA1  = Get_File_Stats(Dir1,r"/",Name);
+        Date1, Size1, DS1, MIA1  = Get_File_Stats(Dir1,Globals.PathSep,Name);
         Name2 = Name;
         Dir_2 = Dir2;
-        F1 = split( r"/", Name)[-1];     # Dest only
-        D1 = split( r"/", Name)[1];     # Dest only
+        F1 = split( GLobals.PathSep, Name)[-1];     # Dest only
+        D1 = split( Globals.PathSep, Name)[1];     # Dest only
         if D1 == 'tftpboot' : next	#and ! $Verbose;  # Added JW - Skip showing tftp
         if D1 == 'cfgfiles' :
             Name2 = F1
-            Dir_2 = re.sub( r"/\w{1}$", "", Dir_2)            # Remove the release pipe  Dir_2 = r"joe/test/g"
+            Dir_2 = re.sub( Globals.PathSep+ "\w{1}$", "", Dir_2)            # Remove the release pipe  Dir_2 = r"joe/test/g"
 
         if D1 == 'www' and WWW_Path != '' :
             Dir_2 = WWW_Path;            # We have alread remove release pipe, change DIR2 to /
-            Dir_2 = re.sub.i(r"/www/$", "", Dir_2)            # Remove WWW
+            Dir_2 = re.sub.i(Globals.PathSep+" www" + Globals.PathSep + "$", "", Dir_2)            # Remove WWW
 
-        Date2, Size2, DS2, MIA2  = Get_File_Stats(Dir_2,r"/",Name2)
+        Date2, Size2, DS2, MIA2  = Get_File_Stats(Dir_2,Globals.PathSep,Name2)
 
         SizeDiff = Size1 - Size2;
         if SizeDiff <= 0 :  Size2 = ''      # No need to reprint it!
@@ -292,7 +288,7 @@ def Show_File_Attrs(Dir1, Dir2, File2do):
         if ( MIA ) : 
             Msg += 'MIA'
         elif (NotTheSame and not SizeDiff):   # different Dates only
-            if (ChkSumIt and File_Checksum(Dir1,r"/",Name) == File_Checksum(Dir2,r"/",Name2)) : 
+            if (ChkSumIt and File_Checksum(Dir1,Globals.PathSep,Name) == File_Checksum(Dir2,Globals.PathSep,Name2)) : 
                 if ChkSumIt: Msg += '(CS passed!)' 
                 NotTheSame = 0
             else :
@@ -302,12 +298,12 @@ def Show_File_Attrs(Dir1, Dir2, File2do):
         if NotTheSame :
             if not MIA1 :
                 Files4Update.append(Name)
-                cp_args.append(Dir1,r"/",Name," ",Dir2,r"/",Name2)
+                cp_args.append(Dir1,Globals.PathSep,Name," ",Dir2,Globals.PathSep,Name2)
             if Age > 0 :   # The Master has been updated
                 Msg += '*'
             else :
                 Msg += '*' * 10
-                Files4Archive.append(Dir2,r"/",Name2)
+                Files4Archive.append(Dir2,Globals.PathSep,Name2)
 
         Str = Pad(Name2, Offset[0]) + GapStr[0]     # Name
         Str += Pad( Size1, Offset[1], ' ', 2 ) + GapStr[1]
@@ -344,14 +340,14 @@ def Show_Files_Attrs__Bars(Offset, GapStr, Next_Col):
     return
 #_______________________________________________________________________________________________
 
-def Show_Files_Attrs__Get_Files(Path):
+def Show_Files_Attrs__Get_Files (Path):
     "Get file list ?"
 
     #  No sure this is needed File_List = [];
     New_List = [];
-    File_List(Path);
-    for index in range(File_List) :    # $Path/the/file.txt -> the/file.txt
-        index.strip( Path + r"/" ) 
+    #File_List(Path);
+    for index in range(File_List(Path)) :    # $Path/the/file.txt -> the/file.txt
+        index.strip( Path + Globals.PathSep ) 
         New_List.append( index)
         # not sure this is needed $FileList{$FNwoPath} = 1;  # !!!WTF
 
@@ -362,9 +358,9 @@ def Show_Files_Attrs__Get_Files(Path):
 def xShow_Files_Attrs__Sub_File_Name(Dir, MyName):
     "Get file list ??"
     Old_Name = MyName;
-    if not( os.path.isfile(Dir + r"/" + MyName)) :            # Try any known substitutions
-        D1 = MyName.split('/')[0]     # Because .xxxrc files are buried
-        F1 = MyName.split('/')[1]     # Because .xxxrc files are buried
+    if not( os.path.isfile(Dir + Globals.PathSep + MyName)) :            # Try any known substitutions
+        D1 = MyName.split(Globals.PathSep)[0]     # Because .xxxrc files are buried
+        F1 = MyName.split(Globals.PathSep)[1]     # Because .xxxrc files are buried
         if D1 == "cfgfiles": MyName = F1 
 #         $MyName = &fnstrip ($MyName, 2) if &fnstrip ($MyName, 8) eq 'pl';
     if Old_Name != MyName : 

@@ -218,16 +218,16 @@ def Init_All(Util_only=0):
 # end [acquired]
 
     try: 
-        os.path.isdir(Globals.Tmp) # $Tmp is declared in $Globals
+        os.path.isdir(Globals.FileTmpDir) # $Tmp is declared in $Globals
         try:
-            os.path.isfile(Globals.Tmp)
+            os.path.isfile(Globals.FileTmpDir)
         except:
-            exit("Attempting to create \%s: file %s exists!" % Globals.Tmp, Globals.Tmp)
+            exit("Attempting to create \%s: file %s exists!" % Globals.FileTmpDir, Globals.FileTmpDir)
     except:
         try:
-            os.mkdir(Globals.Tmp)
+            os.mkdir(Globals.FileTmpDir)
         except:
-            exit("Can\'t create tmp directory %s" % Globals.Tmp)
+            exit("Can\'t create tmp directory %s" % Globals.FileTmpDir)
     if Globals.Debug : print("Debug in Init all:%s" % Globals.Debug)
     if Globals.Debug and not os.path.isfile(Globals.Cfg_File) : print("Debug: Run config read with %s" % Globals.Cfg_File)
     if not Util_only:         # Required for test oriented scripts only ...
@@ -276,12 +276,14 @@ def Init_Also(Util_only) :
                 if not Globals.SessionForce : Exit(107, "Session %i start declined" % Globals.Session) 
                 Print_Log (11, "Forcing session %i" % Session)
             Stats.Session('write')                # Tags the Session.
-
-        Globals.Tmp += '/s' + str(Globals.Stats['Session'])
-        if not os.path.isdir(Globals.Tmp) : 
-            try : os.mkdir(Globals.Tmp)
-            except: exit("Unable to Create tmp dir %s" % Globals.Tmp)
-        Logs.Arc_Logs (Globals.Tmp, '_logs')
+        if not os.path.isdir(Globals.FileTmpDir) : 
+            try : os.mkdir(Globals.FileTmpDir)
+            except: exit("Unable to Create tmp dir %s" % Globals.FileTmpDir)
+        Globals.FileTmpDir += Globals.PathSep + 's' + str(Globals.Stats['Session'])
+        if not os.path.isdir(Globals.FileTmpDir) : 
+            try : os.mkdir(Globals.FileTmpDir)
+            except: exit("Unable to Create tmp dir %s" % Globals.FileTmpDir)
+        Logs.Arc_Logs (Globals.FileTmpDir, '_logs')
         os.umask(0)
         Arc_File = "2arc2\_logs\_" + time.time()
         try:
@@ -317,8 +319,8 @@ def Init_Also(Util_only) :
 
     if not Util_only:                 # Required for test oriented scripts only ...
         Abort ('clear');             # Remove any lurking abort flags
-        Stats['Status'] = 'UserID'
-        Stats ['Power'] = 0  #Power supply on count
+        Globals.Stats['Status'] = 'UserID'
+        Globals.Stats['Power'] = 0  #Power supply on count
         Stats.Update_All()
         print ("\n")
         if UserID == 'none' :
@@ -329,8 +331,8 @@ def Init_Also(Util_only) :
         UserID = pwd.getpwnam(UserID)[1]  # Still need to figure out key in python $Key;
         UID_Check (UserID_tmp)  #Exit on fail!  Use adduser.pl ...
 
-        Stats['UserID'] = UserID
-        Stats['Status'] = 'Menu'
+        Globals.Stats['UserID'] = UserID
+        Globals.Stats['Status'] = 'Menu'
         Stats.Update_All()
 
         Comm_Log = Tmp+"/Comm.log"
@@ -357,7 +359,7 @@ def Init_Also(Util_only) :
         try:
             os.remove(Out_File)
         except: pass    
-        Print_Out_XML_Tag ('Test')
+        Logs.Print_Out_XML_Tag ('Test')
         Erc = 0;
         Stats.Update_All
 

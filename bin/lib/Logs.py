@@ -39,6 +39,8 @@ import Globals
 import Util
 import Logs
 import Stats
+import FileOp
+import re
 
 #What to use here for python?
 #use Time::HiRes qw(gettimeofday tv_interval);
@@ -47,9 +49,8 @@ import Stats
 def Arc_Logs (Path, Label) :
      """Alternative to Rotate_Logs, creates a folder based on the creation date of 
      the first file arc'd, and moves any files(not dirs) found to the new sub-dir.
-
-     Move = 'mv'
-     Delete = 'rm -f'
+     Move = mv
+     Delete = rm -f
      From 
      To 
      fh 
@@ -61,23 +62,25 @@ def Arc_Logs (Path, Label) :
           Delete = 'del'
 
      Dir_list = os.listdir(Path)
+     if Globals.Verbose : print ("Arc_Logs Dir list: %s" % Dir_list)
+     if Globals.Verbose : print ("Arc_Logs Path: %s" % Path)
      for index in Dir_list :
-          Arc_File = re.sub(r"/2arc2(.*)/", r"\1", index)
+          Arc_File = re.sub(Globals.PathSep+"2arc2(.*)" + Globals.PathSep, Globals.PathSep+ "1", index)
           if ( Arc_File ) :
                if Debug : print("Removing %s" ,index)
                os.path.join(r,index);
                break;
 
-     File_Count = File_List(Path, 1); # Don't recurse any subs
+     File_Count = FileOp.File_List(Path, 1); # Don't recurse any subs
      if not File_Count : return 
 
      if Arc_File == '' :
           # Perl Arc_File = $^T - ( ( -C $File_List[0] ) * 3600 * 24 ); # Ptyton commented does not appered to be used
-          Arc_File = Label + "\_" + PT_Date( Arc_File, 2 )
-          Arc_File = re.sub(r"\s","_", Arc_File)
+          Arc_File = Label + Globals.PathSep+ "_" + PT_Date( Arc_File, 2 )
+          Arc_File = re.sub(Globals.PathSep+ "s","_", Arc_File)
           Arc_File = re.sub(r"[\/\:]","-", Arc_File)
 
-     Arc_File = Path+ r"/" + Arc_File
+     Arc_File = Path+ Globals.PathSep + Arc_File
 
      os.makedirs(Arc_File)
 
@@ -540,9 +543,9 @@ def Rotate_Log(LogFile, Count):
      Ext = fnstrip(LogFile,8)
 
      while (Count) :
-          To = PFN+r"\."+Count+r"\."+Ext
+          To = PFN+Globals.PathSep+"."+Count+Globals.PathSep+"."+Ext
           Count -= 1
-          From   = PFN+r"\."+Count+r"\."+Ext
+          From   = PFN+Globals.PathSep+"."+Count+Globals.PathSep+"."+Ext
           try:
                os.rename(From, To)
           finally:
