@@ -38,6 +38,8 @@ from Globals import *
 import re
 import Stats
 import Logs
+from os.path import isfile, join
+
 
 #import psutil # will need a package  pip install psutil and ggc build of package, lots of pid utils
 
@@ -72,7 +74,7 @@ def Abort(Op):
     ##&Abort (set);
     
 
-    File = Stats_Path + r'/system/' + Stats['Host_ID'] + r'-' + str(Stats['Session'])
+    File = join(Globals.Stats_Path,"system", Globals.Stats['Host_ID'] + r'-' + str(Globals.Stats['Session']))
 
     if  Op == 'run_check' :   # Checks to see if session is running
             # Acts on the system stat file, not the abort file
@@ -83,7 +85,7 @@ def Abort(Op):
 
         if Op == 'rm' :
             try:
-                Erc = os.delete(File)
+                Globals.Erc = os.delete(File)
             except:
                 exit(0)    #This should only be called by Exit
 
@@ -91,14 +93,14 @@ def Abort(Op):
             if os.path.isfile(File) : # It's not running ...
                 return (0) 
             Erc = os.delete(File)
-            if Erc : Exit( 10, File ) 
+            if Globals.Erc : Exit( 10, File ) 
 
         File += '-ABORT'
 
         if Op == 'check'  or  Op == 'clear' :
             if os.path.isfile(File) :
-                Erc = os.delete(File)
-                if Erc : Exit( 10,  'Unable to delete Abort flag file' ) 
+                Globals.Erc = os.delete(File)
+                if Globals.Erc : Exit( 10,  'Unable to delete Abort flag file' ) 
                 if Op == 'check'  :
                     Power('OFF')
                     Exit( 199, 'Operator Aborted' )
@@ -107,9 +109,9 @@ def Abort(Op):
         if Op == 'set' :
             UMask = os.umask()
             os.umask(0)
-            Erc = os.open(File, 'a').close()  # Touch a file
+            Globals.Erc = os.open(File, 'a').close()  # Touch a file
             os.umask(UMask)
-            if Erc : Exit( 9, 'Unable to touch Abort file' ) 
+            if Global.Erc : Exit( 9, 'Unable to touch Abort file' ) 
             return (0);
 
         # Since every one of the above have an unconditional return ...
@@ -632,6 +634,7 @@ def PT_Date(Time=int(time.time()), Type=0):
     "0          2002/06/30 08:59        [default]"
     "1          06/30 08:59"
     "2          06/30 08:59:01"
+    "5          2002~06~30~08~59"
     "6          06/30/02"
     "8          06-30-02"
     "9          20020630.085901        [same as NTD function]"
@@ -651,11 +654,13 @@ def PT_Date(Time=int(time.time()), Type=0):
     Date_Str[0] = str(tm_year)+"/"+str(tm_mon)+"/"+str(tm_mday)+" "+str(tm_hour)+"\:"+str(tm_min)
     Date_Str[1] = str(tm_mon)+"/"+str(tm_mday)+" "+str(tm_hour)+"\:"+str(tm_min)
     Date_Str[2] = Date_Str[1] + ":" + str(tm_sec)
+    Date_Str[5] = str(tm_year)+"~"+str(tm_mon)+"~"+str(tm_mday)+"~"+str(tm_hour)+"~"+str(tm_min)
     Date_Str[6] = str(tm_mon)+"/"+str(tm_mday)+"/"+ str(tm_year )[2:4]   # last two dig of 4 dig year
     Date_Str[8] = str(tm_year)+"-"+str(tm_mon)+"-"+str(tm_mday)                      #New!
     Date_Str[9] = str(tm_year)+str(tm_mon)+str(tm_mday)+"\."+str(tm_hour)+str(tm_min)+str(tm_sec)
 
-    if Type == "[0-2689]" :
+    if Type :
+        if Globals.Verbose : print ("PT_Date returning time format type %s" % Type)
         return ( Date_Str[Type] )
     else:
         return (str(time.time()))

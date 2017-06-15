@@ -54,6 +54,7 @@ import FileOp
 import Logs
 import Util
 import Stats # qw( %Stats %TestData %Globals $Stats_Path);
+from os.path import isfile, join
 
 
 #__________________________________________________________________________
@@ -285,40 +286,43 @@ def Init_Also(Util_only) :
             except: exit("Unable to Create tmp dir %s" % Globals.FileTmpDir)
         Logs.Arc_Logs (Globals.FileTmpDir, '_logs')
         os.umask(0)
-        Arc_File = "2arc2\_logs\_" + time.time()
+        Arc_File = "2arc2_logs_" + str(Util.PT_Date(time.time(),5))
         try:
-            fh = open(Arc_File,"w")
-            close(fh)
+            if Globals.Verbose : print ("Init_Also Creating arc file %s " % join(Globals.FileTmpDir,Arc_File))
+            fh = open(join(Globals.FileTmpDir,Arc_File),"w")
+            #close(fh)
         except:
-            exit("Unable to create Arc_File %s" % Arc_File)
+            exit("Unable to create Arc_File %s" % join(Globals.FileTmpDir,Arc_File))
 
     # Set up log files...
-    Globals.XLog = Tmp+"/"+Globals.Main+r".log";
+    Log_Str = ''
+    Globals.XLog = join(Globals.FileTmpDir,Globals.Main)+r".log";
     #!!!    &Read_Version;
     Msg = Get_Release_Info      # Sets $Version, etc or Aborts on error!
     if not Globals.Quiet : print( "\n\n" )
-    if Globals.Stats['Session'] : Log_Str += "Session "+ Globals.Stats['Session']+": "
-    Log_Str += "Starting %s version %s at %s" % Globals.Main, Globals.TestData['Ver'], Util.PT_Date(time.time(), 2)
-    Globals.Erc = Util.Print_Log (1, Log_Str)
+    if Globals.Stats['Session'] : Log_Str += "Session "+ str(Globals.Stats['Session'])+": "
+    Log_Str += "Starting %s version %s at %s" % (Globals.Main, Globals.TestData['Ver'], Util.PT_Date(time.time(), 2))
+    Globals.Erc = Logs.Print_Log (1, Log_Str)
     Log_Str = ''
     if Globals.Erc : Util.Exit (3, "(%s)" % Globals.Xlog)
-    Logs.Print_Log (11,"This PID = %s, ShellPID = %s" % Globals.Stats['PID'], Globals.Stats['PPID'])
-    Logs.Print_Log (11, 'path = ' + Util.abs_path (Globals.GP_Path))
-    for Module in( sys.modules['os']) :
-        Vers = Global.Version[fnstrip(Module, 7)]
-        Module  = sys.modules['OS'][Module]  #Value (Full path / filename)
-        if Module[0:1] == '.' :
-            Module = osos.getcwd() +  "/" + Module
-        Log_Str = "Lib: " + Module
-        if Vers == '' : Log_Str += "\t[Ver: %s]" % Vers
-        if not str.find(Module, "python") : Print_Log (11, Log_Str)
-        IncAge = time.time() - stat.st_mtime(Module)
-        if IncAge < 1000 : Print_Log (1, "Using new Module") 
+    Logs.Print_Log (11,"This PID = %s, ShellPID = %s" % (Globals.Stats['PID'], Globals.Stats['PPID']))
+    if Globals.Debug : print ("Init_also GP_Path %s" % Globals.GP_Path)
+    Logs.Print_Log (11, 'path = ' + Globals.GP_Path)
+    #for Module in  sys.modules['os'] :
+    #Vers = Globals.CMtestVersion[FileOp.fnstrip(sys.modules['os'], 7)]
+    #Module  = sys.modules['OS']  #Value (Full path / filename)
+    #if Module[0:1] == '.' :
+        #Module = join(os.getcwd(),Module)
+    #Log_Str = "Lib: " + Module
+    #if Vers == '' : Log_Str += "\t[Ver: %s]" % Vers
+    #if not str.find(Module, "python") : Print_Log (11, Log_Str)
+    #IncAge = time.time() - stat.st_mtime(Module)
+    #if IncAge < 1000 : Print_Log (1, "Using new Module") 
 
     Log_Str = ''
 
     if not Util_only:                 # Required for test oriented scripts only ...
-        Abort ('clear');             # Remove any lurking abort flags
+        Util.Abort ('clear');             # Remove any lurking abort flags
         Globals.Stats['Status'] = 'UserID'
         Globals.Stats['Power'] = 0  #Power supply on count
         Stats.Update_All()

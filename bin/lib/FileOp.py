@@ -80,23 +80,27 @@ def File_List (File_Path=".",No_Recurse=0):
     #       our @Dir_List  - List of (sub)dirs in a spec'd dir (&File_List)
     #       our @File_List - List of files in a spec'd dir (&File_List)
     """
-    Globals.File_List = ''
+    Globals.File_List = []
+    fileslist = []
     count = 0
     try:
         Globals.Dir_List = os.listdir(File_Path)
-        for root, dirs, files in os.walk(File_Path):
-            if Debug : print(root, "consumes ", end="")
-            if Debug : print(sum([getsize(join(root, name)) for name in files]), end="")
-            if Debug : print("bytes in ", len(files), "non-directory files")
-            Globals.File_List.append(files)
-            if 'CVS' in dirs: dirs.remove('CVS')  # don't visit CVS directories
-            if '.git' in dirs: dirs.remove('.git')  # don't visit Git directories
-            if No_Recurse : break
-            Count += 1
-            return (Count);
+        if Globals.Verbose : print ("File_List File Path %s Globals.Dir_List %s" % (File_Path, Globals.Dir_List))
     except:
-        exit("Unable to process File_Path: %s in FileList" % File_Path)
-        return(0)
+        exit("Unable to process File_Path: %s in File_List" % File_Path)      
+    for root, dirs, files in os.walk(File_Path):
+        if Globals.Debug : print(root, "consumes ", end="")
+        if Globals.Debug : print(sum([getsize(join(root, name)) for name in files]), end="")
+        if Globals.Debug : print("bytes in ", len(files), "non-directory files")
+        fileslist.append(files)
+        Globals.File_List = fileslist
+        if 'CVS' in dirs: dirs.remove('CVS')  # don't visit CVS directories
+        if '.git' in dirs: dirs.remove('.git')  # don't visit Git directories
+        count += 1
+        if No_Recurse : return (count)
+    return(count)
+            
+    
 #_______________________________________________________________________________
 def File_Checksum (fileName) :
     " Return CRC32 checksum of file"

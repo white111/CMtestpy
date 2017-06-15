@@ -194,10 +194,10 @@ global Caching; Caching         = 0;        # Set by a <Loop> cmd, unset by </Lo
 #print(globals())
 
 #Finds during Debug
-global GP_Path
+#global GP_Path
 global Cg_File
 global Pid
-global Run_Time ;  Run_Time =0
+global Run_Time ;  Run_Time = 0
 global Start_Time ; Start_Time = 0
 global Last_Log_Interval; Last_Log_Interval = 0
 global Last_Log_Time ; Last_Log_Time = 0 #epoch tim

@@ -35,6 +35,7 @@ CMtestVersion['Stats'] = VER + CVS_VER
 #from lib.Globals import *
 import Globals
 import os
+import time
 
 #__________________________________________________________________________________
 def Read(Stats_File):
@@ -122,26 +123,26 @@ def Update_All():
         """ Update all Stats """
 
         Update_Test_Times()
-        Stats.Write()
+        Write()
         return
 #__________________________________________________________________________________
 def Update_Test_Times():
         """ Update all Stats times """
         global Stats
-        if Stats['ECT']: Stats['TTG'] = Stats['ECT'] - time.time() 
-        if Stats['Status'] == 'Finished' : Stats['TTG'] = 0 
-        TestData['TTT'] = time.time() - Stats['TimeStamp']
-        TestData['ATT'] = TestData['TTT'] - Wait_Time
-        if TestData['TEC'] : TestData['TSLF'] = time.time() - TestData['TOLF'] 
-        TestData['ERC']  = Erc
+        if Globals.Stats['ECT']: Globals.Stats['TTG'] = Globals.Stats['ECT'] - time.time() 
+        if Globals.Stats['Status'] == 'Finished' : Globals.Stats['TTG'] = 0 
+        Globals.TestData['TTT'] = time.time() - Globals.Stats['TimeStamp']
+        Globals.TestData['ATT'] = Globals.TestData['TTT'] - Globals.Wait_Time
+        if Globals.TestData['TEC'] : Globals.TestData['TSLF'] = time.time() - Globals.TestData['TOLF'] 
+        Globals.TestData['ERC']  = Globals.Erc
 
-        if Debug : Globals['Loop_Time'] = Loop_Time
+        if Globals.Debug : Globals.GlobalVar['Loop_Time'] = Globals.Loop_Time
         return
 #__________________________________________________________________________________
 def  Write ():
         """ Write stats - used by update functions """ 
         
-        Stats['Updated'] = time.time()
+        Global.Stats['Updated'] = time.time()
         # Because of the Package declaration(Perl) Likly not needed for Python ...
         Stats_Path    = Stats_Path
         Host_ID       = Host_ID
@@ -150,7 +151,7 @@ def  Write ():
         File1 = Globals.GlobalVar["Stats_Path"]+ "/" + Host_ID + '-' + getppid + '.txt'
         File2 = Globals.GlobalVar["Stats_Path"] + "/" + Globals.Stats['UUT_ID'] + '.txt'
 
-        if Stats['UUT_ID'] == '' :
+        if Globals.Stats['UUT_ID'] == '' :
                 Stats_File = File1
         else :
                 if os.path.exsists(File):

@@ -53,6 +53,7 @@ from optparse import OptionParser
 #import lib.GUI
 import sys, traceback  # catch keyboard interupt
 import platform
+from os.path import isfile, join
 
 
 
@@ -127,12 +128,13 @@ def main():
     
     #Get our base directory and find the Station Config File 
     File = os.path.abspath(__file__)
+    Globals.GP_Path = FileOp.fnstrip(File,1)
     PPATH = FileOp.fnstrip(File,1)
-    if Globals.Debug > 0 : print ("OS path detected is: %s " % PPATH)
-    if PPATH == '': PPATH = ".."
+    if Globals.Debug : print ("OS path detected is: %s " % Globals.GP_Path)
+    if Globals.GP_Path == '': Globals.GP_Path = ".."
 
     if Globals.OS == "NT":
-        Globals.Cfg_File = PPATH + r"\cfgfiles\testctrl.defaults.cfg"
+        Globals.Cfg_File = join(Globals.GP_Path,"cfgfiles","testctrl.defaults.cfg")
         #Globals[LogPath] = "\Logs"
         TmpDir = expanduser("~")
         

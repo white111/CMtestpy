@@ -56,38 +56,39 @@ def Arc_Logs (Path, Label) :
      fh 
      Arc_File
      """
-
-     if Globals.OS == 'NT' : 
-          Move = 'ren'
-          Delete = 'del'
+     Arc_File = ""
+     #if Globals.OS == 'NT' : 
+          #Move = 'ren'
+          #Delete = 'del'
 
      Dir_list = os.listdir(Path)
      if Globals.Verbose : print ("Arc_Logs Dir list: %s" % Dir_list)
      if Globals.Verbose : print ("Arc_Logs Path: %s" % Path)
-     for index in Dir_list :
-          Arc_File = re.sub(Globals.PathSep+"2arc2(.*)" + Globals.PathSep, Globals.PathSep+ "1", index)
-          if ( Arc_File ) :
-               if Debug : print("Removing %s" ,index)
-               os.path.join(r,index);
-               break;
-
+     for index in os.listdir(Path) :
+          if re.search( "2arc2", index ) and isfile(join(Path,index)) :
+               #value =  re.escape(Globals.PathSep+ r'2arc2(.*)' + Globals.PathSep)  #Need to escape the \
+               #pattern = re.compile(value)
+               #Arc_File = re.sub(value, "", index)  #Time Stamp for aour Arcive dir
+               if Globals.Debug : print("Removing %s %s"  % (index, Arc_File) )
+               try: os.remove(join(Path,index))
+               except: print ("Arch_Logs unable to remove %s " % join(Path,index))
+               try: 
+                    Arc_File = replace("2arc2", "",index)
+                    if Globals.Debug : print("Arc_Logs creating directory %s" % join(Path,Arc_File))
+                    os.makedirs(join(Path,Arc_File))
+                   
+               except:
+                    print("Arc_Logs failed creating directory %s" % join(Path,index))
+                    
      File_Count = FileOp.File_List(Path, 1); # Don't recurse any subs
      if not File_Count : return 
+     
+     for index in os.listdir(Path) :
+          if isfile(join(Path, index)) and not Arc_File == '' :
+                    if Globals.Debug : print("Arc_Logs renaming file %s to %s" % (join(Path,index),join(Path,Arc_File)))
+                    Globals.Erc = os.rename(join(Path,index), join(Path,Arc_File),index)
 
-     if Arc_File == '' :
-          # Perl Arc_File = $^T - ( ( -C $File_List[0] ) * 3600 * 24 ); # Ptyton commented does not appered to be used
-          Arc_File = Label + Globals.PathSep+ "_" + PT_Date( Arc_File, 2 )
-          Arc_File = re.sub(Globals.PathSep+ "s","_", Arc_File)
-          Arc_File = re.sub(r"[\/\:]","-", Arc_File)
-
-     Arc_File = Path+ Globals.PathSep + Arc_File
-
-     os.makedirs(Arc_File)
-
-     for index in File_List :
-          Erc = os.rename(index, Arc_File)
-
-     if Erc : Exit (999,"Arc_Logs returned a %s" % Erc)
+     if Globals.Erc : Exit (999,"Arc_Logs returned a %s" % Globals.Erc)
 
      return
 #__________________________________________________________________________
@@ -467,20 +468,21 @@ def Print2XLog(Msg="", DontPrint2Screen=0, NoNewLine=0, TagAsError=0):
      else:
           Tag = '   '
      if Last_Log_Interval > ReDate : TimeField = Util.PT_Date(int(time.time()), 2) 
-     else: "\t" + print("%.3f", Run_Time)
+     else: print("\t %.3f" % Globals.Run_Time)
 
      if Msg.startswith("done") : return (0) 
-
+     LOG=''
      if not Globals.New_Log : #!!! Required for Win32 - otherwise really slow! (Opened in Yield.pl)
           try :
                LOG = open(Globals.XLog, 'r+') 
+               LOG.write(TimeField+":\t"+Tag+"\t"+Msg+"\n")
+               if not Globals.New_Log :
+                    LOG.close               
                return (3)
           except: 
                Util.Exit(1, "Can\'t open "+Globals.XLog+" for append")          
 
-     LOG.write(TimeField+":\t"+Tag+"\t"+Msg+"\n")
-     if not Globals.New_Log :
-          LOG.close
+    
 
 
      Globals.Last_Log_Time = int(time.time()) #epoch time
