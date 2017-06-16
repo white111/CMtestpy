@@ -550,7 +550,7 @@ def Pad(Orig_Str="", Len_Int=0, Pad_Str=' ', Where=0):
             Orig_Str = Orig_Str + Pad_Str
 
     while ( len(Orig_Str) > Len_Int ) :
-        chop(Orig_Str)
+        chomp(Orig_Str)
 
     return (Orig_Str)
 

@@ -44,6 +44,7 @@ import datetime
 import os
 import os.path
 import time
+from os.path import join
 
 
 #def Myglobals():
@@ -117,7 +118,7 @@ global Stats_Path; Stats_Path      = ''
 global PathSep; 
 if os.name == "nt" : PathSep = "\\" 
 else: PathSep = "/"
-global FileTmpDir; FileTmpDir = os.path.expanduser("~") + PathSep + "cmtestmp" #  Tmp             =  "$Home/tmp"
+global FileTmpDir; FileTmpDir = join(os.path.expanduser("~"),"cmtestmp") #  Tmp             =  "$Home/tmp"
 
                 
 
@@ -171,7 +172,7 @@ global GlobalVar; GlobalVar = {   # Globals Dictionary will use to replace perl 
             "PC_IP2"          : 0,
             "Power_Switch_IP" : 0,
             "Power_Switch2_IP" : 0,
-            "Stats_Path"      : "",  # Usually /var/local/cmtest/stats
+            "Stats_Path"      : join(FileTmpDir,"stats"),  # Usually /var/local/cmtest/stats
             "UUT_IP_Base"     : 21,
             "UUT_IP_Range"    : 21,
             "User"            :21,
@@ -208,6 +209,8 @@ global File; File  = []         #List of Files and directory paths
 global  Dir_List; Dir_List  = []    # List of (sub)dirs in a spec'd dir (&File_List)
 global File_List; File_List = []    # List of files in a spec'd dir (&File_List)
 #global FH; FH = 'FH00'      # The nested (recursive) File Handle
+#Stats
+RC = 0
 
 print ("Globals init .. Done:%i" % Debug)
                 #return

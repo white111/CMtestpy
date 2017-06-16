@@ -226,7 +226,7 @@ def Log_Error(Msg):
      Print_Out_XML_Tag("Error")
      Print_Out( '		Log_Error: ' + Msg);
      Print_Out_XML_Tag();
-     Util.SCIIColor('reset');
+     Util.ASCIIColor('reset');
      if (Exit_On_Error) :
           Exit_On_Error_Count -= 1
           # THis must be Erc=0 to avoid dancing forever with $Exit
@@ -497,9 +497,9 @@ def Print_Log(Mode=0, Msg=""):
      else : TagAsError = 0
      DontPrint2Screen = Mode
 
-     RC = Print2XLog(Msg, DontPrint2Screen, 0, TagAsError);
+     Globals.RC = Print2XLog(Msg, DontPrint2Screen, 0, TagAsError);
 
-     return (RC)
+     return (Globals.RC)
 #__________________________________________________________________________________
 def Print_Out(Msg):
      "Print a line to the output file Out_File"
@@ -515,15 +515,15 @@ def Print_Out(Msg):
      return (0);
 
 #__________________________________________________________________________________
-def Print_Out_XML_Tag(Tag):
+def Print_Out_XML_Tag(Tag=''):
      "Add XML Tags"
 
      if Tag == '' :                 # It's an end tag - pop it off the stack
-          Tag = '/' + XML_Tags.pop()
+          Tag = '/' + Globals.XML_Tags.pop()
      else :                   
-          XML_Tags.append(Tag) #!!! may want to do a split of any attribute later...
+          Globals.XML_Tags.append(Tag) #!!! may want to do a split of any attribute later...
 
-     RC = Print_Out("r\<"+Tag+r"\>"+"\n");
+     Globals.RC = Print_Out("r\<"+Tag+r"\>"+"\n");
      return
 #__________________________________________________________________________
 def Rotate_Log(LogFile, Count):
@@ -563,7 +563,7 @@ def Rotate_Log(LogFile, Count):
 
      # $From still contains the ...0.log
 
-     if Erc : Exit (Erc,'') 
+     if Globals.Erc : Exit (Globals.Erc,'') 
      Print2XLog ("Rotating log files ... -> " +To, 1);    # To the new log file!
      return()
 #__________________________________________________________________________

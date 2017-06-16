@@ -36,6 +36,9 @@ CMtestVersion['Stats'] = VER + CVS_VER
 import Globals
 import os
 import time
+from os.path import join
+import Util
+import FileOp
 
 #__________________________________________________________________________________
 def Read(Stats_File):
@@ -142,15 +145,15 @@ def Update_Test_Times():
 def  Write ():
         """ Write stats - used by update functions """ 
         
-        Global.Stats['Updated'] = time.time()
+        Globals.Stats['Updated'] = time.time()
         # Because of the Package declaration(Perl) Likly not needed for Python ...
-        Stats_Path    = Stats_Path
-        Host_ID       = Host_ID
-        LogSN     = LogSN
+        #Stats_Path    = Stats_Path
+        #Host_ID       = Host_ID
+        #LogSN     = LogSN
 
-        File1 = Globals.GlobalVar["Stats_Path"]+ "/" + Host_ID + '-' + getppid + '.txt'
-        File2 = Globals.GlobalVar["Stats_Path"] + "/" + Globals.Stats['UUT_ID'] + '.txt'
-
+        File1 = join(Globals.GlobalVar["Stats_Path"], Globals.Host_ID + '-' + str(os.getppid()) + '.txt')
+        File2 = join(Globals.GlobalVar["Stats_Path"], Globals.Stats['UUT_ID'] + '.txt')
+        if Globals.Debug : print("Stats.Write to locations: %s %s %s" %(File1, File2, Globals.FileTmpDir))
         if Globals.Stats['UUT_ID'] == '' :
                 Stats_File = File1
         else :
@@ -160,30 +163,35 @@ def  Write ():
                         
                 Stats_File = File2;
 
-        if not os.path.isdir(Globals.GlobalVar["Stats_Path"]) : Stats_File = Globals.FileTmpDir+ "/" + TmpStats.txt   #For early debug!: 
+        if not os.path.isdir(Globals.GlobalVar["Stats_Path"]) : Stats_File = join(Globals.FileTmpDir, TmpStats.txt)   #For early debug!: 
         try :
                 STATS = open(Stats_File, 'w')
-                STATS.write( "\n[Stats]\n")
-
-                L1 = 15        # Pad (right of key) amount
-
-                for Key in Stats :
-                        STATS.write( Pad(Key, L1) + "= " + Stats[Key] + "\n")
-
-                STATS.write( "\n[TestData]\n" )
-
-                for Key in TestData :
-                        STATS.write(Pad(Key, L1) + "= " + TestData[Key] + "\n")
-
-                STATS.write("\n[Globals]\n")
-
-                for Key in Globals :
-                        #Var = 'main::' + Key  # Pointer operation
-                        STATS.write(Pad(Key, L1) + "= " + Key + "\n")
-        
         except: 
-                Exit (8, "Can\'t open Stats File: %s for write" % Stats_File)        
+                Util.Exit (8, "Can\'t open Stats File: %s for write" % Stats_File) 
+        STATS.write( "\n[Stats]\n")
+        
+        L1 = 15        # Pad (right of key) amount
+
+        for Key in Globals.Stats :
+                STATS.write( "\n[TestData]\n" )
+                STATS.write( Util.Pad(Key, L1) + "= " + str(Globals.Stats[Key]) + "\n")
+                if Globals.Debug : print ( " Stats.Write Writing Globals.Stats[Key] %s " % Globals.Stats[Key] )
+        
+        for Key in Globals.TestData :
+                STATS.write(Util.Pad(Key, L1) + "= " + str(Globals.TestData[Key]) + "\n")
+                if Globals.Debug : print ( " Stats.Write Writing Globals.TestData[Key] %s " % Globals.TestData[Key] )
+
+        STATS.write("\n[Globals]\n")
+
+        for Key in Globals.GlobalVar :
+                #Var = 'main::' + Key  # Pointer operation
+                STATS.write(Util.Pad(Key, L1) + "= " + str(Globals.GlobalVar[Key]) + "\n")
+                if Globals.Debug : print ( " Stats.Write Writing Globals.GlobalVar[%s] %s " % (Key,Globals.GlobalVar[Key]) )
+        
+        if Globals.Debug : print ( " Stats.Write done "  )        
         STATS.close
+        if Globals.Debug : print ( " Stats.Write close "  )
+        
         return
 #_____________________________________________________________________________
 1;
