@@ -40,6 +40,10 @@ pip install pyserial  # import serial
 pip install fabric  # SSH util proposed - No
 pip3.4 install ssh #linux
 pip3.5 install ssh # Windows  Having install issue on both systems
+pip3.5 install passlib # windows
+pip install passlib # Linux
+pip3.5 install bcrypt # Windows
+
 yum install python34-devel
 use strict;
 use Getopt::Std qw(:DEFAULT);

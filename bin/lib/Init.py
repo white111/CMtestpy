@@ -49,12 +49,18 @@ from datetime import datetime, timedelta
 import socket
 if not os.name == "nt": import crypt, pwd
 import getpass # No Default support for crypt in Windows
+#from passlib.hash import bcrypt  # needs pip install
+import bcrypt
 import os.path
 import FileOp
 import Logs
 import Util
 import Stats # qw( %Stats %TestData %Globals $Stats_Path);
 from os.path import isfile, join
+#try:
+    #import pwd
+#except ImportError:
+    #import winpwd as pwd
 
 
 #__________________________________________________________________________
@@ -326,20 +332,19 @@ def Init_Also(Util_only) :
         Globals.Stats['Status'] = 'UserID'
         Globals.Stats['Power'] = 0  #Power supply on count
         Stats.Update_All()
-        print ("\n")
-        if UserID == 'none' :
-            X = Ask_User( 'text16', 'UserID', 'Please enter your UserID#' )
-
-        UserID_tmp = UserID
-
-        UserID = pwd.getpwnam(UserID)[1]  # Still need to figure out key in python $Key;
+        UserID_tmp = ''
+        if Globals.CurrentUserID == 'none' :
+            Globals.CurrentUserID = Util.Ask_User( 'text16', 'UserID', 'Please enter your UserID#' )
+        
+        UserID_tmp = bcrypt.hashpw(Globals.CurrentUserID.encode('utf-8'),bcrypt.gensalt()) # Still need to figure out key in python $Key;
+        if Globals.Debug : print ("Init user password hash is : %s" %UserID_tmp)
         UID_Check (UserID_tmp)  #Exit on fail!  Use adduser.pl ...
 
         Globals.Stats['UserID'] = UserID
         Globals.Stats['Status'] = 'Menu'
         Stats.Update_All()
 
-        Comm_Log = Tmp+"/Comm.log"
+        Globals.Comm_Log = join(Tmp,"Comm.log")
         # system "rm -f $Comm_Log";        # OR
         #        &Rotate_Log ($Comm_Log, 10);
                                                         # Aborts on error!
@@ -348,26 +353,26 @@ def Init_Also(Util_only) :
                                         # Figure the UUT_IP address ...
 
         IPA = UUT_IP_Base.split(r".")
-        UUT_IP_Top = IPA[3] + UUT_IP_Range - 1        # Highest sub allowed
-        IPA[3] += Stats['Session'] - 1            # 1 per session or
+        UUT_IP_Top = IPA[3] + Globals.UUT_IP_Range - 1        # Highest sub allowed
+        IPA[3] += Globals.Stats['Session'] - 1            # 1 per session or
         if IPA[3] > UUT_IP_Top : Exit (28, "No IP addr available for this session") 
-        UUT_IP  = IPA[0]+"\."+IPA[1]+"\."+IPA[2]+"\."+IPA[3]
+        Globals.UUT_IP  = IPA[0]+"\."+IPA[1]+"\."+IPA[2]+"\."+IPA[3]
         IPA[3] += 1  ##$IPA[3]++;  There is a possibility of conflict, but we shuld end up using 2 session if the second IP is used.
         if IPA[3] > UUT_IP_Top : Exit (28, "No Secondary IP addr available for this session") 
-        UUT_IP_SEC  = IPA[0]+"\."+IPA[1]+"\."+IPA[2]+"\."+IPA[3]
+        Globals.UUT_IP_SEC  = IPA[0]+"\."+IPA[1]+"\."+IPA[2]+"\."+IPA[3]
 
-        Print_Log (11, "UUT_IP  = %s" % UUT_IP)
-        Print_Log (11, "CmdFilePath = %s" % CmdFilePath)
+        Print_Log (11, "UUT_IP  = %s" % Globals.UUT_IP)
+        Print_Log (11, "CmdFilePath = %s" % Globals.CmdFilePath)
         # Assign the output file ...
-        Out_File = Tmp + r"/" + OutFile # Default is cmtest.xml
+        Globals.Out_File = join(Tmp,Globals.OutFile) # Default is cmtest.xml
         try:
             os.remove(Out_File)
         except: pass    
         Logs.Print_Out_XML_Tag ('Test')
-        Erc = 0;
+        Globals.Erc = 0;
         Stats.Update_All
 
-        PT_Log = Tmp+"/Expect.log"
+        PT_Log = join(Tmp,"Expect.log")
         try:
             os.remove(PT_Log)
         except: pass
@@ -406,24 +411,24 @@ def Mk_Port():
     os.umask(Mask)
     return
 #_______________________________________________________________
-def UID_Check(Tmp):
+def UID_Check(UserTmp=''):
     "$UserID strarts out as an encypted pw, then ->user_name"
     "$UserID is our global, to be retrieved from %User_ID{PW"
 
-    Erc = Read_Data_File ("/usr/local/cmtest/users.cfg")   # was $GP_Path/cfgfiles/users.cfg
-    if Erc : Exit ( 999, "Can't read User cfg file") 
+    Globals.Erc = Util.Read_Data_File (Globals.GlobalVar["UsersCfgPath"])   # was $GP_Path/cfgfiles/users.cfg
+    if Globals.Erc : Util.Exit ( 999, "Can't read User cfg file") 
 
     #    &Print_Debug;  $uid.pl
-    Msg = "UID_Check: Key=\'%s\', " % UserID
-    User_Level = User_Level[UserID]
-    UserID = User_ID[UserID]
-    if UserID == '' : Msg += "UID=" + Tmp + ', ' 
-    Msg += "User=%s Level=%s" % UserID, User_Level
+    Msg = "UID_Check: Key=\'%s\', " % Globals.CurrentUserID
+    Globals.CurrentUser_Level = Globals.User_Level[Globals.CurrentUserID]
+    Globals.CurrentUserID = Globals.User_ID[Globals.CurrentUserID]
+    if Globals.CurrentUserID == '' : Msg += "UID=" + UserTmp + ', ' 
+    Msg += "User=%s Level=%s" % Globals.CurrentUserID, Globals.CurrentUser_Level
     Print_Log (11, Msg)
     if Development == 0 : 
-        if UserID == '' : Exit ( 999, "Failed user authentication") 
+        if Globals.CurrentUserID == '' : Exit ( 999, "Failed user authentication") 
     else :
-        if UserID == '' : Print2XLog ("Warning: Failed user authentication\n") 
+        if Globals.CurrentUserID == '' : Print2XLog ("Warning: Failed user authentication\n") 
 
     return ()
 #__________________________________________________________________________

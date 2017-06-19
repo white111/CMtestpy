@@ -177,6 +177,7 @@ global GlobalVar; GlobalVar = {   # Globals Dictionary will use to replace perl 
             "UUT_IP_Range"    : 21,
             "User"            :21,
             "PW"            :21,
+            "UsersCfgPath"      : join("" ,"users.cfg"), 
             }
 global Menu_List;Menu_List = {};
 global Menu_Desc;Menu_Desc = {};
@@ -184,6 +185,7 @@ global Menu_Cmd;Menu_Cmd  = {};
 global GP_Path; GP_Path ="none"
 global Util_only;  Util_only = 0
 global UserID; UserID = "none"
+
 global Out_File; Out_File = "" # optional -O ouput xml file
 
 # from Connect
@@ -212,7 +214,19 @@ global File_List; File_List = []    # List of files in a spec'd dir (&File_List)
 #Stats
 RC = 0
 
+
+global CurrentUserID;CurrentUserID          = 'none'                   # User ID / Badge #
+global CurrentUser_Level;CurrentUser_Level		 = ''					 # User Access level, Coded Decimal in config.
+global User_ID;User_ID         = {}                   # Used [here] for authentication
+global User_Level;User_Level         = {}  
+
+global Exit_On_Error; Exit_On_Error = 0
+
+global Multi_Session; Multi_Session = 0               # Session number if more than one(was HA_Session)
+
+
 print ("Globals init .. Done:%i" % Debug)
                 #return
+
 #__________________________________________________________________________
 1;

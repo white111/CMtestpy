@@ -113,7 +113,7 @@ def main():
     Globals.Session = options.Session
     Globals.SessionForce = options.Force
     Globals.Force = options.Force
-    Globals.UserID = options.User
+    Globals.CurrentUserID = options.User
     Globals.Out_File = options.Output
     Globals.Loop_overide = options.Loop
 

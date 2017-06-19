@@ -140,19 +140,18 @@ def ASCIIColor(color='default'):
 
     return
 #__________________________________________________________________________
-def Ask_User(Type, Var, Prompt) :
+def Ask_User(Type='', Var='', Prompt='') :
     "Ask user for input"
 
     if Prompt == '':  # &Ask_User ( Type Prompt ) [no Var] supported
         Prompt = Var;
         Var = ''
 
-    Data;
     Start_Wait = int(time.time()); #Epoch time
     #Prompt =~ s/^\"(.*)\"$/$1/; # Strip off " and return
-    Prompt = re.sub(r"^\"","",Prompt)
-    Prompt = re.sub(r"\"$","",Prompt)
-    Print_Log(11, "Asking User \'%s\' [ type = $Type, $Var = ] ..." % Prompt);
+    #Prompt = re.sub(r"^\"","",Prompt)
+    #Prompt = re.sub(r"\"$","",Prompt)
+    Logs.Print_Log(11, "Asking User \'%s\' [ type = $Type, $Var = ] ..." % Prompt);
 
 #    return () unless lc $Type =~ /text/;
 
@@ -161,14 +160,14 @@ def Ask_User(Type, Var, Prompt) :
         print ("No GUI support Yet")
         Exit (999, "Java failed to run") 
     else :   # Get user input from a prompt
-        Data = input("%s: " % Prompt)[:-1]  # get Data and Chop
+        Data = input("%s: " % Prompt)  # get Data and no Chop
         if Data == "\["  : Exit( 198, "Get UI Abort" )
-        Wait_Time += int(time.time()) - Start_Wait;
+        Globals.Wait_Time += int(time.time()) - Start_Wait;
 
     if not Var == "":
         # Perl ${$Var} = Data;  Not sure yet how to conver or if Ask_User is needed, Python recomends Dictionaly instead
-        Globals[Var] = Data
-        return (0)
+        Globals.GlobalVar[Var] = Data
+        return (Data)
     else :
         return (Data)
 #____________________________________________________________________________
@@ -206,28 +205,29 @@ def Cleanup(Var):
     return (Var)
 #____________________________________________________________________________________
 def DataFile_Read(File):
-    "# Sources list information from a file like:"
-    "# [Hosts]"
-    "# mfg1"
-    "# mfg3"
-    "# and loads the array @Hosts"
-    "# or"
-    "# [Part_Number_Key]"
-    "# 001 = 00002"
-    "# 002 = 00292"
-    "# ="
-    "# %Part_Number_Key {"
-    "#    001 => '00002'"
-    "#    002 => '00292'"
-    "#  } "
+    """# Sources list information from a file like:
+    # [Hosts]
+    # mfg1
+    # mfg3
+    # and loads the array @Hosts
+    # or"
+    # [Part_Number_Key]
+    # 001 = 00002
+    # 002 = 00292
+    # ="
+    # %Part_Number_Key {
+    #    001 => '00002'
+    #    002 => '00292'
+    #  } """
 
     # The array/hash must be a pre-declared global
 
    
     Label = ''  # Could be a list name or a hash name
-    PrintLog( "Reading data file %s ... \n" % File, 1);
+    Logs.Print2XLog( "DataFile_Read Reading data file %s ..." % File, 1);
     try:
-        with open (File, r) as fh :
+        with open (File, 'r') as fh :
+            if Debug : print("We are in Datafile_read opened: File %s" % File)
             for line in fh:
                 line = line.strip()
                 if line.startswith("#"): next  # Starts with a comment
@@ -264,8 +264,10 @@ def DataFile_Read(File):
                         if not Global[Label] : return (4, '@' + Label) 
                         # s/^\s*(.*)\s*/$1/;
                         Global[Label] = Var  # push a new value            
-    except:
-        print("Unbale to open file: % in Function: %" % File, func.__name__)
+    except: 
+        print("DataFile_Read Unable to open file: %s" % File)
+        Globals.Erc = 1
+        return(1)
     #  Why, never called if First : Load_Web_Data(Label)  #Once again at the end of the file
 
     #fh.close()
@@ -385,8 +387,8 @@ def Exit_TestExec( erc, Msg) :
     ASCIIColor('reset')
     Logs.Log_History(2)
     if not Globals.Erc == 107 : Stats.Session('delete')    # Release this session
-    if Globals.HA_Session and not Globals.HA_Session == 0 :
-        if not Globals.Erc == 107 and not opt_f : Stats.Session('delete',HA_Session)     # Release this HA session
+    if Globals.Multi_Session and not Globals.Multi_Session == 0 :
+        if not Globals.Erc == 107 and not opt_f : Stats.Session('delete',Multi_Session)     # Release this HA session
     exit(Globals.Erc)
     return
 #____________________________________________________________________________
@@ -550,7 +552,7 @@ def Pad(Orig_Str="", Len_Int=0, Pad_Str=' ', Where=0):
             Orig_Str = Orig_Str + Pad_Str
 
     while ( len(Orig_Str) > Len_Int ) :
-        chomp(Orig_Str)
+        Orig_Str = Orig_Str[:-1]  # Chop last char
 
     return (Orig_Str)
 
@@ -618,11 +620,11 @@ def PETC(MSG):
 
 #__________________________________________________________________________________
 
-def PrintLog(Data) :
-    " # This cannot be, be cause of the problem of variable dereferencing"
-    "# NO package DataFile"
-    Print2XLog (Data)
-    return
+#def PrintLog(Data) :
+    #" # This cannot be, be cause of the problem of variable dereferencing"
+    #"# NO package DataFile"
+    #Print2XLog (Data)
+    #return
 #__________________________________________________________________________________
 def PT_Date(Time=int(time.time()), Type=0):
     "PT_Date - return a date in various formats."
@@ -711,13 +713,13 @@ def Read_Cfg_File(File):
 def Read_Data_File(File):
     " Might have been written by &Write_Data_File"
 
-    Global.Erc, Data  = DataFile_Read(File)
-    if not Erc : return (0) 
-    if Global.Erc == 1 :
-        PrintLog ("Unable to read Data File: %s" % File);
+    Globals.Erc =  DataFile_Read(File)
+    if not Globals.Erc : return (0) 
+    if Globals.Erc == 1 :
+        Logs.Print2XLog ("Unable to read Data File: %s" % File);
         return (2)
-    elif Global.Erc :
-        Exit (Global.Erc, "Attempt to load undefined var: %s" % Data);
+    elif Globals.Erc :
+        Exit (Globals.Erc, "Attempt to load undefined var: %s" % Data);
 
     return (0)
 

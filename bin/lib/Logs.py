@@ -227,11 +227,11 @@ def Log_Error(Msg):
      Print_Out( '		Log_Error: ' + Msg);
      Print_Out_XML_Tag();
      Util.ASCIIColor('reset');
-     if (Exit_On_Error) :
+     if (Globals.Exit_On_Error) :
           Exit_On_Error_Count -= 1
           # THis must be Erc=0 to avoid dancing forever with $Exit
           #&Exit (0, "Exit_On_Error") if $Exit_On_Error_Count < 1;
-          if (Exit_On_Error_Count < 1) :  # if Error count reached Exit
+          if (Globals.Exit_On_Error_Count < 1) :  # if Error count reached Exit
                Print_Log (2, 'Exit on too Many Errors ');
                #&Exit (0, "Exit_On_Error");
                Final()
@@ -315,7 +315,7 @@ def Log_History(Type):
      LogFile = Globals.GlobalVar['LogPath'] + Globals.PathSep + "history.log"
      Msg = Util.PT_Date(str(time.time()), 1) + ":\t"+str(Globals.Stats['TimeStamp'])
      Msg += "\t"+Globals.Op_ID+"\t"+Globals.Stats['Host_ID']
-     if Globals.Stats['Session']: Msg += "-"+Globals.Stats['Session'] 
+     if Globals.Stats['Session']: Msg += "-"+str(Globals.Stats['Session'] )
      Msg += "\t"
 
      
@@ -454,7 +454,7 @@ def Print2XLog(Msg="", DontPrint2Screen=0, NoNewLine=0, TagAsError=0):
      "Print a line to the execution log # Replacement for Print_Log"
 
      #!!! Find out whos calling with $NoNewLine set, and who cant just use Global Quiet the same as everyone else!!
-     Msg.rstrip  # chomp return to make sure we do not have two
+     Util.chomp(Msg)  # chomp return to make sure we do not have two
      # perl not converting  see if needed  or fix my $EOL_Ch = ($NoNewLine) ? '' : "\n";
      EOL_Ch = r"\n"
      if not Globals.Quiet or not DontPrint2Screen : print(Msg + EOL_Ch) 
@@ -468,7 +468,7 @@ def Print2XLog(Msg="", DontPrint2Screen=0, NoNewLine=0, TagAsError=0):
      else:
           Tag = '   '
      if Last_Log_Interval > ReDate : TimeField = Util.PT_Date(int(time.time()), 2) 
-     else: print("\t %.3f" % Globals.Run_Time)
+     else: print("Globals.Run_Time \t %.3f" % Globals.Run_Time)
 
      if Msg.startswith("done") : return (0) 
      LOG=''
