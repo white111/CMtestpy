@@ -339,7 +339,7 @@ def Debug_Cat(File):
                 for line in fh: 
                     print (line)
         else :
-            print( File + "... doesn't exist!\n")
+            print( File + "... doesn't exist!")
     return
 
 #_____________________________________________________________________________
