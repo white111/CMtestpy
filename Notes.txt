@@ -1,0 +1,33 @@
+...             ser = serial.Serial(port, 9600, timeout=1)
+...             ser.close()
+...             ser.open()
+...             ser.write("ati")
+...             time.sleep(3)
+...             print ser.read(64)
+...             if ser.read(64) is not '':
+...                 print port
+...         except serial.SerialException:
+...             continue
+...         i+=1
+
+
+ser = serial.Serial("/dev/ttyS1", 9600, PARITY_NONE, timeout=1)
+ser = serial.Serial("COM1", 9600,N81,PARITY_NONE, timeout=1)
+ser.close()
+ser.open()
+ser.write("joe")
+time.sleep(3)
+print(ser.read(64))
+
+
+ser = serial.Serial("COM1", 9600,parity="N", bytesize=8,stopbits=1,timeout=1)
+
+ser = serial.Serial("COM1", 9600,parity="N", bytesize=8,stopbits=1,timeout=1,xonxoff=0)
+ser = serial.Serial("COM1", 9600,parity="N", bytesize=8,stopbits=1,timeout=1,xonxoff=0,sdrdtr="off")
+ser = serial.Serial("COM1", 9600,parity="N", bytesize=8,stopbits=1,timeout=1,xonxoff=0,dsrdtr=0,rtscts=0, exclusive=True)
+ser = serial.Serial("/dev/ttyS1", 9600,parity="N", bytesize=8,stopbits=1,timeout=1,xonxoff=0,dsrdtr=0,rtscts=0, exclusive=True)
+
+
+pexpect.spawnbase.SpawnBase
+
+OpenExpect = pexpect.spawnbase.SpawnBase(OpenPort)

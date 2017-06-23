@@ -224,6 +224,11 @@ global Exit_On_Error; Exit_On_Error = 0
 
 global Multi_Session; Multi_Session = 0               # Session number if more than one(was HA_Session)
 
+#From UserID.py
+#global User_ID; User_ID   = {};
+#global User_Level;User_Level = {};
+global XLOG; XLOG = join(FileTmpDir,"uid.log")
+
 
 print ("Globals init .. Done:%i" % Debug)
                 #return
