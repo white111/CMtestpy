@@ -177,7 +177,10 @@ global GlobalVar; GlobalVar = {   # Globals Dictionary will use to replace perl 
             "UUT_IP_Range"    : 21,
             "User"            :21,
             "PW"            :21,
-            "UsersCfgPath"      : join("" ,"users.cfg"), 
+            "UsersCfgPath"      : join("" ,"users.cfg"),
+            "User_ID" : "none",  # Used [here] for authentication
+            "User_Level"  : 0,  # Used [here] for authentication
+            
             }
 global Menu_List;Menu_List = {};
 global Menu_Desc;Menu_Desc = {};

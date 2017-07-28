@@ -48,7 +48,7 @@ from os.path import isfile, join
 #__________________________________________________________________________________
 def exit(var):
     "Do a sys.exit()"
-    print(var)
+    #print(var)
     sys.exit(var)
     return
 
@@ -274,36 +274,42 @@ def DataFile_Read(File):
     return (0)
 #________________________________________________________________
 def DataFile_Write(File, Action="r+", Type="variblestr", Label=''):
-    r"Write_Data_File (FullFS-File, [r+,w(overwrite)], [dictionary|list|varible], VarName)"
-    "#           Note: The array/hash must be a pre-declared global"
-    #Does not appear to be used, changing definitions to match Python List Tuple Dictionary Varible
+    """"Write_Data_File (FullFS-File, [r+,w(overwrite)], [dictionary|list|varible], VarName)
+    #           Note: The array/hash must be a pre-declared global"
+    #Does not appear to be used, changing definitions to match Python List Tuple Dictionary Varible"""
 
     Pr_             = '  '   # Line Preamble
-
-    if Type == '' : 
-        Type = "variblestr"
+    if Type in ("dictionary","list","variable") :
+            #Type = Action
+            if Globals.Debug : print ("DataFile_Write found Action: %s" % Action)
     else :
+        if Globals.Debug : print ("Debug:Don\'t understand call \&DataFile_Write " + \
+                "File=%s, Action=%s, Type=%s, Label=%s" % (File, Action, Type, Label))
         return (7, "Don\'t understand call \&DataFile_Write " + \
-                "File=%s, Action=%s, Type=%s, Label=%s" % File, Action, Type, Label)
+                "File=%s, Action=%s, Type=%s, Label=%s" % (File, Action, Type, Label))
 
     fh = ''
-    PrintLog("Writing data file %s (%s, %s, %s)... \n" % File, Action, Type, Label )
+    Logs.Print2XLog("Writing data file %s (%s, %s, %s)... " % (File, Action, Type, Label) )
+    if Globals.Debug : print ("Debug:Writing data file %s (%s, %s, %s)... " % (File, Action, Type, Label) )
 
-    try  :
-        fh = open(File,Action )    
-    finally:
-        return (2)
+    if Globals.Debug : print ("Debug: Open file %s for Write with action %s" % (File,Action))
+    fh = open(File,Action ) 
+       
+    if Globals.Debug : print ("Debug Failed Open file %s for Write with action %s" % (File,Action))
+    #return (2)
 
-    if Action == "w" : fh.write( "# Created by &Data_File::Write (%s, %s, %s) on: %s # %s \$\n\n" % Action, Type, Label, int(time.time()) + "! Do not edit!\n\n", Id )
+    if Action == "x" :
+        if Globals.Debug : print ("Debug:Creating %s with Action %s" % (File,Action))
+        fh.write( "# Created by DataFile.Write (%s, %s, %s) on: %s # %s \$\n\n" % Action, Type, Label, int(time.time()) + "! Do not edit!\n\n", Id )
 
     print ( "\n\n")
 
-    Str = Type + " " + Label +" not defined!"
+    Str = Type + " " + str(Label) +" not defined!"
     if Type == 'dictionary' :
-        if  Global[Label]:  return (3, Str) 
+        if  Globals.Label:  return (3, Str) 
         fh.write("\n\[%s\]\n\n" % Label)
-        for key in Global[Label] :
-            if not Global[Label][key] == '' : fh.write( Pr_ + key + FPad(key) + Global[Label][key] + "\n")
+        for key in Globals.Label :
+            if not Globals.Label[key] == '' : fh.write( Pr_ + key + FPad(key) + Global[Label][key] + "\n")
     elif Type == 'list' :
         if not Label :  return (4, Str) 
         fh.write("\n\%s\]\n\n" % Label )
@@ -313,7 +319,7 @@ def DataFile_Write(File, Action="r+", Type="variblestr", Label=''):
         if Label : return (5, Str) 
         fh.write( "\n\n" +Pr_ + "Label" + "\t\=" + Label + "\n\n")
     else :
-        return (6, "Don\'t understand call \&DataFile::Write_ ('File', %s, %s, %s)" % Action, Type, Label);
+        return (6, "Don\'t understand call \&DataFile::Write_ ('File', %s, %s, %s)" % (Action, Type, Label));
     fh.write("\n")
 
     fh.close()
@@ -576,7 +582,7 @@ def Parse (Length, Data=''):
 
     return (Chunk)
 #__________________________________________________________________________________
-def PETC(MSG):
+def PETC(MSG='',PETC_Dont_Stop=0,Silent=0):
     "Generate a XML record"
     r"<XML>"
     "  <Callers>"
@@ -599,6 +605,7 @@ def PETC(MSG):
     #         _
 
     X = ""
+    Wait_Time=0
     Start_Wait = int(time.time()) #Epoh
     if GUI :
         Button = Message( MSG + "\n\n\nPress [OK] to continue, [Cancel] to Abort", 3,1 )
@@ -816,7 +823,7 @@ def Write_Data_File(File):
     return (0)
 
 #_____________________________________________________________________________
-def YN(Msg, Default):
+def YN(Msg='', Default=''):
     " Originally from PT2"
     "Prompt user for a Y(es), N(o) or Q(uit)"
     "Return a 1, 0 or exit resp\'ly"
@@ -828,7 +835,8 @@ def YN(Msg, Default):
         PETC_Dont_Stop = 0    # To avoid a hang!
         Var = PETC(Msg+"?")
         if Var == '' and not Default == '' : Var = Default.upper 
-        if Var == 'Y' :
+        if Var.upper == 'Y' :
+            if Globals.Debug : print ("YN User answered yes")
             return(1)
         else :
             return(0)

@@ -30,7 +30,8 @@ CVS_VER = ' [ CVS: $Id: Logs.pm,v 1.10 2011/01/21 18:38:56 joe Exp $ ]';
 global CMtestVersion; 
 if not "CMtestVersion" in globals() : CMtestVersion={}
 CMtestVersion['cmtest'] = VER + CVS_VER
-
+import sys
+sys.path.append("./lib;")
 import Globals
 #from Globals import *
 import Util
@@ -38,8 +39,7 @@ import Init
 import FileOp
 import Logs
 import Connect
-import sys
-sys.path.append("../lib;")
+
 import os
 import os.path
 from os.path import expanduser
@@ -57,8 +57,9 @@ from optparse import OptionParser
 import sys, traceback  # catch keyboard interupt
 import platform
 from os.path import isfile, join
+#__________________________________________________________________________
 
-def main() : # 2005-09-12 v2
+def main(): # 2005-09-12 v2
     """
     #           1) [Securely] Save a master user_id | user Name | current euid
     #              to allow for regeneration of all keys should the master key
@@ -87,7 +88,7 @@ def main() : # 2005-09-12 v2
         #parser.error("-s session# required")
     Globals.Debug += options.Debug
     Globals.Verbose += options.Verbose
-    Globals.CurrentUserPass = options.PASSWORD
+    Globals.CurrentUserPass = options.Password
     Globals.CurrentUserID = options.User
 
     OS = os.name
@@ -121,68 +122,74 @@ def main() : # 2005-09-12 v2
         #Cfg_File = r'/usr/local/cmtest/testctrl.cfg'
         #Tmp = os.getenv(expanduser("~") + "/tmp", "NO_TMP")
     
-_Init()
-Exists = 0
-Create = 0
-if os.path.isfile(Globals.GlobalVar["UsersCfgPath"]):
-    Exists = 1
-else:
-        Create = Util.YN ("Can\'t find existing encrypted userid file $File! Create?"))
+    _Init()
+    Exists = 0
+    Create = 0
+    if os.path.isfile(Globals.GlobalVar["UsersCfgPath"]):
+        print("User ID file found: %s" % Globals.GlobalVar["UsersCfgPath"])
+        Exists = 1
+    else:
+        print("No user ID file found")
+        Create = Util.YN ("Can\'t find existing userid file %s! Create?" % Globals.GlobalVar["UsersCfgPath"])
+        Globals.Erc = Util.DataFile_Write (Globals.GlobalVar["UsersCfgPath"], 'x', 'User_ID')
+        if Globals.Erc : print( "Create Write_Data_File failed with Erc= ") #%s " % Globals.Erc) 
+
+  # if not Create and not Exists : Util.exit("Can't do anything")
+
+    if not Create:
+        Globals.Erc = Util.Read_Data_File (Globals.GlobalVar["UsersCfgPath"])
+        _PrintLog ("Read_Data returned a Erc %s" % Globals.Erc)
     
+    Count = _Print_Debug()
+    _PrintLog ("Read eUIDs for $Count existing users")
+    
+    Done  = 0
+    Added = 0
+    while not Done :
+        Name, UID, Level = _Add_User()
+        if Name == '' :
+            #$Done = &YN ('Finished');
+            Done = 1
+        else  :
+            try: 
+                Globals.User_ID[UID] and Global.User_ID[UID] and not Name 
+                print( "\n")
+                _PrintLog ("Key already defined for user %s !" % Globals.User_ID[UID])
+                time.sleep(1)
+            except:
+                Globals.User_ID[UID]    = Name;
+                if not Level == '' : Globals.User_Level[UID] = Level 
+                Added +=1
+    
+    if not Added :
+        _PrintLog ('No new users added...!')
+        Util.exit("Done")
+    
+    _Print_Debug()
+    
+    print("\n\nUpdating %s with %s new users" %(Globals.GlobalVar["UsersCfgPath"], Added))
+    Util.PETC("Press Return to Continue")
+    
+    #my $Erc = &Write_Data_File ($File, 'new', 'hash', 'User_ID');
+    #print "Write_Data_File failed with Erc=$Erc" if $Erc;
+    
+    #$Erc = &Write_Data_File ($File, 'cat', 'hash', 'User_Level');
+    #print "Write_Data_File failed with Erc=$Erc" if $Erc;
+    #Globals.Erc = Util.Write_Data_File(Globals.GlobalVar["UsersCfgPath"])
+    Globals.Erc = Util.DataFile_Write (Globals.GlobalVar["UsersCfgPath"], 'r+',"dictionary","User_ID");
+    if Globals.Erc : print( "DataFile_Write(r+) failed with Erc" ) #=%s" % Globals.Erc)
 
-if not Create or Exists : Util.exit("Can't do anything")
-
-if not Create:
-    Globals.Erc = Util.Read_Data_File (Globals.GlobalVar["UsersCfgPath"])
-    Logs.PrintLog ("Read_Data returned a Erc %s" % Globals.Erc)
-
-Count = Print_Debug()
-Logs.PrintLog ("Read eUIDs for $Count existing users")
-
-Done  = 0
-Added = 0
-while not Done :
-    Name, UID, Level = Add_User()
-    if Name == '' :
-        #$Done = &YN ('Finished');
-        Done = 1
-    elif  Globals.User_ID[UID] and
-             Global.User_ID[UID] not Name 
-        print( "\n")
-        Logs.PrintLog ("Key already defined for user %s !" % Globals.User_ID[UID]")
-        sleep 1
-    else :
-        Globals.User_ID[UID]    = Name;
-        if not Level == '' : Globals.User_Level[UID] = Level 
-        Added +=1
-
-if not Added :
-    Logs.PrintLog ('No new users added...!')
-    Utile.exit()
-
-Print_Debug()
-
-print("\n\nUpdating %s with %s new users" %(File, Added))
-Util.PETC()
-
-#my $Erc = &Write_Data_File ($File, 'new', 'hash', 'User_ID');
-#print "Write_Data_File failed with Erc=$Erc" if $Erc;
-
-#$Erc = &Write_Data_File ($File, 'cat', 'hash', 'User_Level');
-#print "Write_Data_File failed with Erc=$Erc" if $Erc;
-
-my $Erc = &Write_Data_File ($File, '>', '%User_ID');
-print "Write_Data_File failed with Erc=$Erc" if $Erc;
-
-$Erc = &Write_Data_File ($File, '%User_Level');
-print "Write_Data_File failed with Erc=$Erc" if $Erc;
-
-exit;
+    #Globals.Erc = Util.Write_Data_File(Globals.GlobalVar["UsersCfgPath"])
+    Globals.Erc = Util.DataFile_Write (Globals.GlobalVar["UsersCfgPath"], 'r+',"dictionary","User_Level");
+    if Globals.Erc: print("DataFile_Write(r+) failed with Erc") #=%s" % Globals.Erc)
+    
+    exit()
+    return
 
 #_______________________________________________________________________________
 
 def _Init():
-    "Initialize Cmtest"
+    "Initialize UserID"
     if Globals.Debug : print("In this Function %s" % __name__)
     global Linux_gbl
     global Erc
@@ -209,68 +216,65 @@ def _Init():
     Globals.Erc = 101
    
     Globals.Erc = 0
-    Init.Init_Also(0)
+    #Init.Init_Also(0)
     return
 #_________________________________________________________________________________
 
-sub Exit     {
-    my ( $erc, $Msg ) = @_;
-    &PrintLog ($Msg,0,0,1) if $erc;
-    exit;
-}
+def _Exit( erc, Msg)   :
+    """ Local Exit routine for Abort """
+    if erc: PrintLog (Msg,0,0,1) 
+    exit()
+#_________________________________________________________________________________
 
-sub PrintLog { &main::Print2XLog (@_)}
+def _PrintLog( Var ):
+    Logs.Print2XLog(Var)
+    return
+#_________________________________________________________________________________
 
-sub Print_Debug {
+def _Print_Debug() :
 
-    my $Count = '?';
-    if ($Debug) {
-        $Count = 0;
-        my @Level = qw( - admin supervisor user);
-        print "\nUsers:\n";
-        foreach  ( keys %User_ID ) {
-            $Count++;
-            print "\t$User_ID{$_} \t: $_ \($Level[$User_Level{$_}]\)\n";
-        }
-        print "\n";
-    }
-    return ($Count);
-}
+    Count = '?'
+    if Globals.Debug :
+        Count = 0
+        Level = ( "-","admin supervisor","user")
+        print("\nUsers:")
+        for key in Globals.User_ID:
+            Count +=1
+            #print( "\t%s \t: %s \(%s]\)" % (Globals.User_ID[key],key, Level[Globals.User_Level[key]] ))
+            print( "\t%s \t: %s \(%s]\)" % (Globals.User_ID[key],key, Level ))
+        print ("")
+    return (Count);
+#_________________________________________________________________________________
 
-sub Add_User {
+def _Add_User():
 
-    print "\n\n\tLeave \'Name\' field blank to Finish\n\n";
+    print( "\n\n\tLeave \'Name\' field blank to Finish\n\n")
+    
+    Name = _Get_User_Data(' Name', 0)
+    if Name == '' :
+        ID = ''
+        Level = ''
+        Name = ''        
+        return ('','','') 
 
-    my $Name = &Get_User_Data(' Name', 0);
-    return () if $Name eq '';
+    ID = _Get_User_Data('   ID', 1)
 
-    my $ID = &Get_User_Data('   ID', 1);
+    Level = _Get_User_Data('Level', 1)
 
-    my $Level = &Get_User_Data('Level', 1);
+    #return (Name, crypt (ID, Key), Level)
+    return (Name, ID, Level)
 
-    return ($Name, crypt ($ID, $Key), $Level);
-}
-
-sub Get_User_Data {  #Kiss version of PT:Ask_User
-
-    my ($Prompt, $Required) = @_;
-    my $Data;
-    while (1) {
-        printf  "$Prompt: ";
-        chop( $Data = <STDIN> );
-        if ( $Data eq "\[" ) { return (); }
-        if ( lc $Data eq 'q' ) { return (); }
-        return ($Data) if length ($Data)
-                       or !$Required;
-    }
-
-
-}
+#_________________________________________________________________________________
+def _Get_User_Data (Prompt, Required) :
+    """Kiss version of Util.Ask_User"""
+    Data = ""
+    while 1 :
+        Data = input("%s: " % Prompt)  # get Data and no Chop
+        if Data == "\["  : Exit( 198, "Get UI Abort" )
+        if Data.lower == 'q' : return ()
+        if Data or not Required: return (Data) 
 
 #____________________________________________________________________________________
-
-
-
 
 
 if __name__ == "__main__":
