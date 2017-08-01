@@ -22,7 +22,7 @@
 #
 #            Copyright (c) 1993 - 2005 Paul Tindle. All rights reserved.
 #            Copyright (c) 2005-2013 Stoke. All rights reserved.
-#            Copyright (c) 2017 Joe White. All rights reserved.
+#            Copyright (c) 2017 Joe White. All rights reserved.xx
 #
 ################################################################################
 VER= 'v0.1 5/23/2017'; # Conversion to Python from Perl 052317 JSW
