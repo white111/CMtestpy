@@ -35,6 +35,7 @@ import Init
 import FileOp
 import Logs
 import Connect
+import Menu
 import sys
 sys.path.append("../lib;")
 import os
@@ -97,7 +98,9 @@ def main():
     parser.add_option("-s", "--session", dest="Session", type="int", default=0,
                       help="Set Sesion #, Default is first avaiable")
     parser.add_option("-L", "--Loop", dest="Loop", type="int", default=0,
-                     help="Overide all Loop counts(seconds)")    
+                     help="Overide all Loop counts(seconds)")
+    parser.add_option("-M", "--Menu", dest="Menu1", type="int", default=0,
+                      help="Override Menu selection for regression test")      
     parser.add_option("-F", "--Force", dest="Force", type="int", default=0,
                       help="Force Session #")
     parser.add_option("-U", "--User", dest="User", default="None",
@@ -162,7 +165,7 @@ def main():
     Quiet = 0;  # Don't allow since we only have a char menu right now
     shucks = 0
     try:
-        Menu_main()  # Bring up menu and start excution
+        Menu.Menu_main()  # Bring up menu and start excution
     except KeyboardInterrupt:
         print( "Shutdown requested...exiting")
         _catch_zap()

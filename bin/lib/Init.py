@@ -332,39 +332,40 @@ def Init_Also(Util_only) :
         Globals.Stats['Status'] = 'UserID'
         Globals.Stats['Power'] = 0  #Power supply on count
         Stats.Update_All()
-        UserID_tmp = ''
-        if Globals.CurrentUserID == 'none' :
-            Globals.CurrentUserID = Util.Ask_User( 'text16', 'UserID', 'Please enter your UserID#' )
-        
-        UserID_tmp = bcrypt.hashpw(Globals.CurrentUserID.encode('utf-8'),bcrypt.gensalt()) # Still need to figure out key in python $Key;
-        if Globals.Debug : print ("Init user password hash is : %s" %UserID_tmp)
-        UID_Check (UserID_tmp)  #Exit on fail!  Use adduser.pl ...
-
-        Globals.Stats['UserID'] = UserID
+        if Globals.GlobalVar['UserID_Check'] == 1 :
+            UserID_tmp = ''
+            if Globals.CurrentUserID == 'none' :
+                Globals.CurrentUserID = Util.Ask_User( 'text16', 'UserID', 'Please enter your UserID#' )
+            UserID_tmp = bcrypt.hashpw(Globals.CurrentUserID.encode('utf-8'),bcrypt.gensalt()) # Still need to figure out key in python $Key;
+            if Globals.Debug : print ("Init user password hash is : %s" %UserID_tmp)
+            UID_Check (UserID_tmp)  #Exit on fail!  Use adduser.pl ...
+            Globals.Stats['UserID'] = UserID
+            
         Globals.Stats['Status'] = 'Menu'
         Stats.Update_All()
 
-        Globals.Comm_Log = join(Tmp,"Comm.log")
+        Globals.Comm_Log = join(Globals.FileTmpDir,"Comm.log")
         # system "rm -f $Comm_Log";        # OR
         #        &Rotate_Log ($Comm_Log, 10);
                                                         # Aborts on error!
-        Abort ('check')             # Make sure there isn't an ABORT flag lurking
+        Util.Abort ('check')             # Make sure there isn't an ABORT flag lurking
 
                                         # Figure the UUT_IP address ...
 
-        IPA = UUT_IP_Base.split(r".")
-        UUT_IP_Top = IPA[3] + Globals.UUT_IP_Range - 1        # Highest sub allowed
-        IPA[3] += Globals.Stats['Session'] - 1            # 1 per session or
-        if IPA[3] > UUT_IP_Top : Exit (28, "No IP addr available for this session") 
-        Globals.UUT_IP  = IPA[0]+"\."+IPA[1]+"\."+IPA[2]+"\."+IPA[3]
-        IPA[3] += 1  ##$IPA[3]++;  There is a possibility of conflict, but we shuld end up using 2 session if the second IP is used.
-        if IPA[3] > UUT_IP_Top : Exit (28, "No Secondary IP addr available for this session") 
-        Globals.UUT_IP_SEC  = IPA[0]+"\."+IPA[1]+"\."+IPA[2]+"\."+IPA[3]
+        IPA = Globals.GlobalVar['UUT_IP_Base'].split(r".")
+        IPAint=int(IPA[3])
+        UUT_IP_Top = IPAint + int(Globals.GlobalVar['UUT_IP_Range']) - 1        # Highest sub allowed
+        IPAint += int(Globals.Stats['Session']) - 1            # 1 per session or
+        if IPAint > UUT_IP_Top : Exit (28, "No IP addr available for this session") 
+        Globals.UUT_IP  = "%s.%s.%s.%s" %(IPA[0],IPA[1],IPA[2],IPAint)
+        IPAint += 1  ##$IPA[3]++;  There is a possibility of conflict, but we shuld end up using 2 session if the second IP is used.
+        if IPAint > UUT_IP_Top : Exit (28, "No Secondary IP addr available for this session") 
+        Globals.UUT_IP_SEC  =  "%s.%s.%s.%s" %(IPA[0],IPA[1],IPA[2],IPAint)
 
-        Print_Log (11, "UUT_IP  = %s" % Globals.UUT_IP)
-        Print_Log (11, "CmdFilePath = %s" % Globals.CmdFilePath)
+        Logs.Print_Log (11, "UUT_IP  = %s" % Globals.UUT_IP)
+        Logs.Print_Log (11, "CmdFilePath = %s" % Globals.CmdFilePath)
         # Assign the output file ...
-        Globals.Out_File = join(Tmp,Globals.OutFile) # Default is cmtest.xml
+        Globals.Out_File = join(Globals.FileTmpDir,Globals.Out_File) # Default is cmtest.xml
         try:
             os.remove(Out_File)
         except: pass    
@@ -372,7 +373,7 @@ def Init_Also(Util_only) :
         Globals.Erc = 0;
         Stats.Update_All
 
-        PT_Log = join(Tmp,"Expect.log")
+        PT_Log = join(Globals.FileTmpDir,"Expect.log")
         try:
             os.remove(PT_Log)
         except: pass
