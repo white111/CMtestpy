@@ -39,8 +39,15 @@ CMtestVersion['Connect'] = VER + CVS_VER
 #import GUI - Not used yet
 import lib.Logs
 import lib.Init
+import Globals
+import Util
+import Stats
+import FileOp
 import time
+import Logs
 import os.path
+import re
+import Init_Product1
 import pexpect #non standard library requires pip install pexpect before use, expect for python
 import pexpect.fdpexpect
 import serial # non standard lib from pip install pyserial
@@ -83,28 +90,33 @@ def Cmd_Expect(ConType, Port, File):
         "processes the cmds individually. Quits the app on EOF"
 
         #!!! Port is now pre-determined so we can lose this arg.
+       
+        Sess = Globals.Stats['Session']
+        if not os.path.exists(File) : Util.Exit (27, "Can\'t find Cmd file %s" %File) 
 
-        Sess = Stats['Session']
-        if os.path.exists(File) : Exit (27, "Can\'t find Cmd file %s" %File) 
-
-        KeyWord, Arg = ""
-        ConExec, ExitCmd = ""
+        KeyWord = ""
+        Arg = ""
+        ConExec = "" 
+        ExitCmd = ""
         Comm = ""
-
+        
         if ConType == 'Serial' :
-                if  not  SPort[Sess] in globals()  : Exit (34, "Serial port not defined for session %s" % Sess)
-                if SPort[Sess].find(r"/dev/tty") :
+                try:
+                        Globals.GlobalVar["SPort[{}]".format(Sess)] 
+                except:
+                        Util.Exit (34, "Serial port not defined for session %s" % Sess)
+                if Globals.GlobalVar["SPort[{}]".format(Sess)].find(r"/dev/tty") :
                         Mk_Port   #Init.pm - just in case!
-                        ConExec = "/usr/bin/minicom -C $Comm_Log $Sess";
-                elif SPort[Sess].find(r":") : 
+                        ConExec = "/usr/bin/minicom -C {} {}".format(Globals.Comm_Log,Globals.Sess)
+                elif Globals.GlobalVar["SPort[{}]".format(Sess)].find(r":") : 
                         ConType = 'TermServer'
-                        ConExec = "/usr/bin/telnet %s" % SPort[Sess]
+                        ConExec = "/usr/bin/telnet %s" % Globals.GlobalVar["SPort[{}]".format(Sess)]
                 elif ConType == 'Telnet' :
-                        if  not Port in globals() : Exit (33, "Connect::Cmd_Expect: Port not defined") 
+                        if  not Globals.Port in globals() : Util.Exit (33, "Connect::Cmd_Expect: Port not defined") 
                         ConExec = "/usr/bin/telnet %s" % Port
                 elif ConType == 'ssh' :
                         ConExec = "/usr/bin/ssh %s -l mfg" % Port
-                else  : Exit (107, "ConType %s ??" % ConType)
+                else  : Util.Exit (107, "ConType %s ??" % ConType)
 
         Process_Cmd_File (Comm, File, 1);                        # Syntax check the cmd file
 
@@ -130,7 +142,7 @@ def Dump_Expect_Data(Data):
 
         if not PT_Log == '' :
                 try: PT_LOG =open(PT_Log,"r+") 
-                except: Exit (3, "Can't open file: %s for cat" % PT_Log);
+                except: Util.Exit (3, "Can't open file: %s for cat" % PT_Log);
 
                 PT_LOG.write( "\n" + '_' * 70 + "\n")
                 PT_LOG.write("%s  -  %s\n" % PT_Date(time.time(), 2) , Log_Str)
@@ -225,7 +237,7 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
                 "<Bypass>    - Skip a section"
         elif KeyWord == 'bypass':  #Start of Bypass
                 if Check_Only: next
-                if Bypass : Exit (999, "Nested bypass not allowed")
+                if Bypass : Util.Exit (999, "Nested bypass not allowed")
                 elif  not Arg : Bypass = 1
                 else : Bypass = 0                                             
                 if Bypass : Print_Log (11, "Start Bypass")  #print("Bypass set: $Bypass\n");
@@ -298,7 +310,7 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
                 p = re.compile(r"(.*?)\$\{(.*?)\}(.*?)")
                 try: 
                         val = p.findall(Arg) 
-                        if val[2]  == '' : Exit (999, "Embedded Cmd file variable %s not defined" % val[2])
+                        if val[2]  == '' : Util.Exit (999, "Embedded Cmd file variable %s not defined" % val[2])
                         Arg = val[1] + (val[2])  + val[3]
                         Process_Cmd_File (Comm, "%s/%s" % CmdFilePath, Arg , Check_Only)
                 except: pass
@@ -314,7 +326,7 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
                 "<loop>    - Start a loop"
         elif KeyWord == 'loop' :                # Start of loop
                 if Check_Only: next
-                if Caching : Exit (999, "Nested loops not allowed")
+                if Caching : Util.Exit (999, "Nested loops not allowed")
                 Caching = 1                  # Turns on looping
                 Tag (Cached,"Starting loop at line %s" % Line)
                 if not Loop_overide == 0  :  Arg = Loop_overide  # It's been overridden with -L
@@ -368,7 +380,7 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
                 Tag (Cached,"Setting %s = %s" % Arg, Val)
                 setattr(self)
                 try: Arg
-                except: Exit (999, "Attempted (un)set command on undeclared global \$" + Arg)
+                except: Util.Exit (999, "Attempted (un)set command on undeclared global \$" + Arg)
                 self.Arg = Val  # Yes this will not work yet, working on it
                 Print_Log (1, "Global var %s = %s" % Arg ,Val)
                 "<Sleep>  Sleep x Seconds uSleep micor sec"
@@ -404,7 +416,7 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
                 if Ex[1] :
                 #if ($Exit_On_Timeout or $Startup) {
                         if Startup :
-                                Exit (32, "Expect timed out (Waiting $TimeOut for $Arg) at $CFName line $Line!");
+                                Util.Exit (32, "Expect timed out (Waiting $TimeOut for $Arg) at $CFName line $Line!");
                         elif Exit_On_Timeout :
                                 Log_Error ("Timeout!: %s" % Log_Str)
                                 Final()
@@ -415,7 +427,7 @@ def Exec_Cmd(Comm, CFName, Line, KeyWord, Arg, Check_Only, Cache):
                 Buffer = Comm.write(before())
                 Log_Str = ''
         else :
-                Exit (999, "(Invalid keyword \"%s\" at line %s in Cmd file %s)" % KeyWord, Line, CFName);
+                Util.Exit (999, "(Invalid keyword \"%s\" at line %s in Cmd file %s)" % KeyWord, Line, CFName);
         #print "\t\t\tDebug=$Debug, EOT=$Exit_On_Timeout, EOE=$Exit_On_Error\n";
         #&PETC ("Connect::Exec_Cmd: Debug is set") if ($Debug);
         return (Done)
@@ -425,7 +437,7 @@ def Add_2_Flat_Cmd_File(Str) :
 
         chomp(Str)
         try: FH = open (Tmp+ r"/FlatCmdFile.dat", 'r+')  
-        except: Exit (3, "Can't open %s for cat" % FH)
+        except: Util.Exit (3, "Can't open %s for cat" % FH)
         FH.write(Str+"\n")
         close(FH)
         return()        
@@ -483,14 +495,14 @@ def Open_Port(ConType, ConExec, baud="9600", Trap='fail',user='',pw=''):
         Count = 5
         Done = 0
 
-        if OS == 'NT' : Exit (110, "Call to Exec_Cmd_File on NT system") ;
+        if OS == 'NT' : Util.Exit (110, "Call to Exec_Cmd_File on NT system") ;
         Msg = "Spawning %s connection: %s .." % ConType, ConExec
         if Debug :Print_Log (1, Msg) 
         #&Print_Log (0, $Msg) if ! $Debug;
 
         while (not Done and Count) :
                 try : Comm = Expect.spawn(ConExec)
-                except: Exit (31, "Couldn't start : $!\n" % ConExec);
+                except: Util.Exit (31, "Couldn't start : $!\n" % ConExec);
                 Comm.log_file(Tmp+"/ExComm.log", "w")
                 if Debug : Expect.Exp_Internal(Verbose)        # Turn on verbose mode if -v
                 #                        $Expect::Debug = 1;
@@ -513,7 +525,7 @@ def Open_Port(ConType, ConExec, baud="9600", Trap='fail',user='',pw=''):
                                 if Comm.expect(3,"incorrect").find('incorrect') : Count -=1
                         Done = 1
                 elif Ex[0] == 2 : # Caught the trap
-                        Exit (999, "Trapped Error condition: $Trap")
+                        Util.Exit (999, "Trapped Error condition: $Trap")
                 else : Count -= 1
 
                 if Done and Count :                                        # There were some retries left!
@@ -523,49 +535,53 @@ def Open_Port(ConType, ConExec, baud="9600", Trap='fail',user='',pw=''):
                 else :        # We're out of retries!
                         if not Quiet: print(" Failed!\n" )
                         Msg = "%s FAILED to start!!\n" % ConExec
-                        Exit (31, Msg)
+                        Util.Exit (31, Msg)
 
         if not Trap == '' :
                 Ex = Comm.expect(2, Trap)
                 Dump_Expect_Data(Ex)
                 if Ex[0] :      # undef if timeout
                                # Got the trap response
-                        Exit (999, "Trapped Error condition: $Trap");
+                        Util.Exit (999, "Trapped Error condition: $Trap");
 
         return (Comm)
 #__________________________________________________________________________
-def Process_Cmd_File(Comm, File, Check_Only, No_Worries) :
+def Process_Cmd_File(Comm, File, Check_Only, No_Worries="") :
         "Loop through command files"
-        CFName = fnstrip(File, 3)
+        CFName = FileOp.fnstrip(File, 3)
         Endtime = ''
         if not os.path.exists(File) and No_Worries: return (0) ;  #Only execute it it
                                                         # the file exists
+        fh=''
         if Check_Only : Msg = "Syntax checking" 
         else : Msg = 'Processing'
         Msg += " Cmd file \'%s\'"% CFName
-        if Check_Only or Debug or Verbose : Print_Log (1, "%s ..." % Msg)
-
-        FH += 1  
-        if FH > CmdFileNestLmt :  Exit (999, "Cmd files nested too deep!")
+        if Check_Only or Debug or Verbose : Logs.Print_Log (1, "%s ..." % Msg)
+        if len(Globals.FH) > Globals.CmdFileNestLmt :  Util.Exit (999, "Cmd files nested too deep!")
         if not os.path.exists(File) :
-                try: FH = open(File , 'r') 
-                except : Exit (2, "Can\'t open Cmd file %s" % File);
+                try: 
+                        fh = open(File , 'r') 
+                        Globals.FH.append(fh)
+                
+                except : 
+                        Util.Exit (2, "Can\'t open Cmd file %s" % File);
+             
 
         Line = 0
         Done = 0
-        with open (File, r) as fh :
+        with open (File, 'r') as fh :
                 for line in fh:
-                        Comm = Comm_Current;   #HA Update our Port pointer, incase it changed
-                        if not (Check_Only and Line == 0) : Stats['Status'] = 'Active' 
-                        if Check_Only and Line == 0 : Stats['Status'] = 'Check' 
+                        Comm = Init_Product1.Comm_Current;   #HA Update our Port pointer, incase it changed
+                        if not (Check_Only and Line == 0) : Globals.Stats['Status'] = 'Active' 
+                        if Check_Only and Line == 0 : Globals.Stats['Status'] = 'Check' 
                         if Line == 0 : Stats.Update_All
-                        Abort(check)
+                        Util.Abort("check")
                         if not Done : Line += 1    # Tags the last line used
                         if Done : Print_Log (11, "Command Done") 
                         if Done : next 
-                        Log_Str = "%s - Line %s\n" % Msg, Line    # This should now get written to the Expect log
-                        chomp(line)
-                        line.rstring      # Remove any leading/trailing whitespace
+                        Log_Str = "%s - Line %s\n" % (Msg, Line)    # This should now get written to the Expect log
+                        Util.chomp(line)
+                        #line.rstring      # Remove any leading/trailing whitespace
                         # s/^\s*(.*)\s*[\n|\r]$/$1/;     # Remove returns/linfeeds  JSW 020106 - Fix for returns/linefeed added to INC files
                         if line.find(r"^\s*$") : next        # (now) null lines
                         if line.find(r"^\#") : next          # Commented out
@@ -632,7 +648,7 @@ def Process_Cmd_File(Comm, File, Check_Only, No_Worries) :
                                 if not KeyWord.find(r"ctrl-\w?|end|wait|send|\/loop|\/bypass|getdata") :
                                         # check to make sure $Arg is valid
                                         Erc = 25
-                                        if Arg == '' : Exit (2, "Null %s,%s,%s Arg at %s line %s: Cmd=\'%s\': Arg=\'%s\'" % Raw_Arg_1,Raw_Arg_2,Arg_save,CFName,Line,KeyWord,Arg) 
+                                        if Arg == '' : Util.Exit (2, "Null %s,%s,%s Arg at %s line %s: Cmd=\'%s\': Arg=\'%s\'" % Raw_Arg_1,Raw_Arg_2,Arg_save,CFName,Line,KeyWord,Arg) 
                                         Erc = 0
          
                                 if Check_Only or not Caching or  KeyWord.find("include") :
@@ -663,8 +679,8 @@ def Process_Cmd_File(Comm, File, Check_Only, No_Worries) :
                                         LBuffer.append("%s,,%s,,%s,,%s,,%s,,1" % CFName,Line,KeyWord,Arg,Check_Only)
         # end of while
         Tag (Cached,"Closing cmd file %s at line %s" % File,Line)
-        close(FH)
-        FH -= 1
+        close(Globals.FH[-1])
+        Globals.FH.pop
         return()
 
 #__________________________________________________________________________

@@ -457,7 +457,7 @@ def Print2XLog(Msg="", DontPrint2Screen=0, NoNewLine=0, TagAsError=0):
      Util.chomp(Msg)  # chomp return to make sure we do not have two
      # perl not converting  see if needed  or fix my $EOL_Ch = ($NoNewLine) ? '' : "\n";
      EOL_Ch = r"\n"
-     if not Globals.Quiet or not DontPrint2Screen : print(Msg + EOL_Ch) 
+     if not Globals.Quiet or not DontPrint2Screen : print(Msg) 
      Globals.Run_Time = Globals.Start_Time  # Also at PT2.pm
 
      # Tagging the date after so many minutes DOES NOT WORK (yet)
@@ -513,7 +513,6 @@ def Print_Out(Msg):
      fh.close
 
      return (0);
-
 #__________________________________________________________________________________
 def Print_Out_XML_Tag(Tag=''):
      "Add XML Tags"
@@ -566,5 +565,25 @@ def Rotate_Log(LogFile, Count):
      if Globals.Erc : Exit (Globals.Erc,'') 
      Print2XLog ("Rotating log files ... -> " +To, 1);    # To the new log file!
      return()
+#__________________________________________________________________________
+def XML_Header():    #        Header information for XML File
+                         #
+     xmlfile=join(Globals.FileTmpDir,Globals.Out_File)
+     try:
+          if Globals.Debug : print("XML_Header trying to open: %s" % xmlfile)
+          LOG = open(xmlfile, 'w')  
+     except:      
+          Util.Exit (3, "Can't open xml {} for cat".format(xmlfile))
+     else:  
+          LOG.write( "  \<Test_Head\> " + "____________________________________________" + "\n" )
+          LOG.write( "	\<Startdate\>" + Util.PT_Date() + "</Startdate>\n")
+          LOG.write( "	\<UserID>$Stats{'UserID'}</UserID>\n")
+          LOG.write( "		\<Host_ID\>$Stats{'Host_ID'}</Host_ID>\n")
+          LOG.write( "		\<Session\>$Stats{'Session'}</Session>\n")
+          LOG.write( "		\<TID\>$TestData{'TID'}</TID>\n")
+          LOG.write( "  <\/Test_Head\>\n")
+          LOG.close
+
+
 #__________________________________________________________________________
 1;

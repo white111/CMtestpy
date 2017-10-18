@@ -93,14 +93,12 @@ def main():
                       help="Turn on Debug Stetments")
     parser.add_option("-v", "--verbose", action="count",  dest="Verbose", default=0,
                       help="Turn on more output") 
-    parser.add_option("-B", "--Batch", type="int",  dest="Menu1", default=0,
+    parser.add_option("-B", "--Batch",  dest="Menu1", default="",
                       help="Batch Mode - no Menu prompt, does not support multi level menu" )  
     parser.add_option("-s", "--session", dest="Session", type="int", default=0,
                       help="Set Sesion #, Default is first avaiable")
     parser.add_option("-L", "--Loop", dest="Loop", type="int", default=0,
-                     help="Overide all Loop counts(seconds)")
-    parser.add_option("-M", "--Menu", dest="Menu1", type="int", default=0,
-                      help="Override Menu selection for regression test")      
+                     help="Overide all Loop counts(seconds)") 
     parser.add_option("-F", "--Force", dest="Force", type="int", default=0,
                       help="Force Session #")
     parser.add_option("-U", "--User", dest="User", default="None",
@@ -174,7 +172,7 @@ def main():
         sys.exit(0)
 
     if not Quiet : print("done\n") 
-    Exit (0)
+    Util.Exit(0)
 
 #_____________________________________________________________________________
 def _Init():

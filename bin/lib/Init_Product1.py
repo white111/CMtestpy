@@ -28,87 +28,89 @@ CVS_VER = ' [ CVS: $Id$ ]';
 global CMtestVersion
 if "CMtestVersion" not in globals() : CMtestVersion={}
 CMtestVersion['Init_Product1'] = VER + CVS_VER
+
+import Globals
+import Logs
 #__________________________________________________________________________
-def Globals_Product1 ():
-	#   Added HA Varialbes
-	Print2XLog ("Setting up SSX variables");
-	global Product_gbl; Product_gbl = 'SSX';
-	global Tmp_HA; Tmp_HA             =  "$ENV{HOME}/tmp" ;
-	global Opening_session; Opening_session = 0;
-	global HA_Session; HA_Session = 0;
-	global HA_Session_N;HA_Session_N = 1;
-	global Comm_Log_HA;Comm_Log_HA = ''; # Log file for com app (minicom) HA
-	global Comm_HA     # Handle for Expect HA
-	global Comm_Start  # global defualt at startup
-	global Comm_Current  # What we ar currently pointing too
-	global HA_Msg;HA_Msg = ''; # Msg added to Print2Xlog
-    
-	#    Imbedded variables
-	global Bench_card_type_gbl;Bench_card_type_gbl = 'null.inc'; #Accuired from GetData POST, used for determing IMC or GLC benchtest
-	global Bench_Prog_card_type_gbl;Bench_Prog_card_type_gbl = 'null.inc';
-	#global glc_type_str_gbl = "2-port";     # GLC port count for testing, from get_board_info, get_chassis_info, get_config_info
-	#global $Slot_1_NOT_IMC_GBL = 0;
-	#global $P20_NOT_INSTALLED_GBL = 0; # This is set during chassis test if tlv 99 returns this string
-	#global $P20_INSTALLED_GBL = 1;
-	#global $Firstboot_Dual_IMC_GBL = 0;
-    
-	## Version Control variable used during Config checkout - Actual values are set in Get_software_release
-	#global $release_name_global = "13.1R5S1_2.9_diag" ;
-	#global $tftp_path_gbl = "/tftpboot/" . $Product_gbl;
-	#my  $tftp_copypath_release = $Product_gbl . "/OS_" . $CMPipe;     #/tfpboot/SSX/OS_a/
-	#global $tftp_copypath_release_gbl = "$tftp_copypath_release/";
-	#global $tftp_bootpath_release_gbl = "$tftp_copypath_release/";
-	##Strings presented by Stoke OS show version and ISSU package select
-	#global $StokeOS_release_gbl = "13.1R5";  #Must match release for links into hdp/images StokeOS Release 6.0 (2011121701).
-	#global $StokeOS_release_Build_gbl = "";
-	#global $StokeOS_ISSU_Apply_gbl = "$StokeOS_release_gbl$StokeOS_release_Build_gbl";
-	#global $StokeOS_ISSU_Install_gbl = "StokeOS-$StokeOS_release_gbl$StokeOS_release_Build_gbl";
-	#global $StokeOS_builddate_gbl = "2014062706";     #6.0 (2012011901)  StokeOS Release 6.0 (2012071619
-	#global $Software_OS_release_gbl = "StokeOS Release $StokeOS_ISSU_Apply_gbl .$StokeOS_builddate_gbl";
-	#global $Stoke_bootloader_ver_gbl = "Stoke Bootloader Release $StokeOS_ISSU_Apply_gbl .$StokeOS_builddate_gbl";
-	#global $show_sys_ISSU_in_use_gbl = "$StokeOS_ISSU_Apply_gbl  Current Version  .StokeOS Release $StokeOS_ISSU_Apply_gbl .$StokeOS_builddate_gbl";
-	##global $show_sys_ISSU_other_gbl = "$StokeOS_release_gbl\\S5  .StokeOS Release $StokeOS_release_gbl\\S5 .$StokeOS_builddate_gbl";
-    
-	#global $Stoke_boot_ver_gbl = "StokeBoot Release 6.0 .2013011510.";
-	#global $Stoke_boot_XGLC_ver_gbl = "StokeBoot Release .6.0 2013011510.";
-    
-	#global $firmware_ver_gbl = "91";
-	#global $firmware_ver_xglc_gbl = "0B";
-	##diag path              xx
-	#global $diag_ver_gbl = $Product_gbl . "/diag_" . $CMPipe;
-	##global $diag_ver_gbl = "layne010307";
-	#global $tftp_copypath_diag_gbl = "$diag_ver_gbl/";   #diag072106, diag080706
-	#global $tftp_bootpath_diag_gbl = "$diag_ver_gbl/";
-    
-	#global $Diag_boot_ver_gbl = "/stoke/bin/dia";
-	##global $Diag_boot_ver_gbl = "2253225765.*/stoke/bin/dia";
-	#global $Diag_boot_ver_cmd_gbl = "cksum /stoke/bin/diag";
-    
-	##GLC redunancy settings  Check_GLC_Redundancy
-	#global $glcredundant_gbl = 0 ;
-	#our	$noglcredundant_gbl = 1 ;
-    
-	##Default names for files copied
-	#global $Stoke_image = "stoke.bin";
-    ##    global $StokeS1_pkg = "stokeS1.pkg";
-	#global $Stoke_pkg = "stokepkg.bin";
-	#global $Stoke_config = "stoke.cfg";
-	#global $Stoke_uboot = "stokeboot.bin";
-	#global $Stoke_ubootxglc = "stokebootxglc.bin";
-	#global $Stoke_bootloader = "bootloader.bin";
-	#global $Stoke_bootloader2 = "bootloader2.bin";
-	#global $Stoke_noodle = "noodle.bin";
-	#global $Stoke_diag_glc = "diag_glc.bin";
-	#global $Stoke_diag_xglc = "diag_xglc.bin";
-	#global $Stoke_onscript_GLC = "GLC.ksh";  # local script on cardbus for parallel memory tests during BI/Ext
-	#global $Stoke_onscript_MC = "IMC.ksh";
-	#global $Stoke_onscript_XGLC = "XGLC.ksh";
-	#global $Format_40gig_MC = "formatto40gigpartition.sh";
-	#global $Format_MC = "storageprep80.sh";
-	##global $Diag_cfint_boot_gbl = "boot image file $Stoke_diag ";
-	#global $Diag_boot_xglc_gbl = "boot image file /hd/mfg/$Stoke_diag_xglc ";
-	#global $Diag_boot_glc_gbl = "boot image file /hd/mfg/$Stoke_diag_xglc ";
-	#global $Diag_cfint_boot_gbl = $Diag_boot_glc_gbl;
+#	#   Added HA Varialbes
+Logs.Print2XLog ("Setting up SSX variables")
+global Product_gbl; Product_gbl = 'SSX';
+global Tmp_HA; Tmp_HA             =  "$ENV{HOME}/tmp" ;
+global Opening_session; Opening_session = 0;
+global HA_Session; HA_Session = 0;
+global HA_Session_N;HA_Session_N = 1;
+global Comm_Log_HA;Comm_Log_HA = ''; # Log file for com app (minicom) HA
+global Comm_HA;Comm_HA=''     # Handle for Expect HA
+global Comm_Start;Comm_Start=''  # global defualt at startup
+global Comm_Current;Comm_Current=''  # What we ar currently pointing too
+global HA_Msg;HA_Msg = ''; # Msg added to Print2Xlog
+
+#    Imbedded variables
+global Bench_card_type_gbl;Bench_card_type_gbl = 'null.inc'; #Accuired from GetData POST, used for determing IMC or GLC benchtest
+global Bench_Prog_card_type_gbl;Bench_Prog_card_type_gbl = 'null.inc';
+global glc_type_str_gbl; glc_type_str_gbl = "2-port";     # GLC port count for testing, from get_board_info, get_chassis_info, get_config_info
+global Slot_1_NOT_IMC_GBL ; Slot_1_NOT_IMC_GBL = 0;
+global P20_NOT_INSTALLED_GBL ; P20_NOT_INSTALLED_GBL = 0; # This is set during chassis test if tlv 99 returns this string
+global P20_INSTALLED_GBL ; P20_INSTALLED_GBL = 1;
+global Firstboot_Dual_IMC_GBL ; Firstboot_Dual_IMC_GBL = 0;
+
+# Version Control variable used during Config checkout - Actual values are set in Get_software_release
+global release_name_global ; release_name_global = "13.1R5S1_2.9_diag" ;
+global tftp_path_gbl ; tftp_path_gbl = "/tftpboot/" + Product_gbl;
+tftp_copypath_release = Product_gbl + "/OS_" + Globals.CMPipe;     #/tfpboot/SSX/OS_a/
+global tftp_copypath_release_gbl ; tftp_copypath_release_gbl = "tftp_copypath_release/";
+global tftp_bootpath_release_gbl ; tftp_bootpath_release_gbl = "tftp_copypath_release/";
+#Strings presented by Stoke OS show version and ISSU package select
+global StokeOS_release_gbl ; StokeOS_release_gbl = "13.1R5";  #Must match release for links into hdp/images StokeOS Release 6.0 (2011121701).
+global StokeOS_release_Build_gbl ; StokeOS_release_Build_gbl = "";
+global StokeOS_ISSU_Apply_gbl ; StokeOS_ISSU_Apply_gbl = "StokeOS_release_gbl"+StokeOS_release_Build_gbl
+global StokeOS_ISSU_Install_gbl ; StokeOS_ISSU_Install_gbl = "StokeOS-"+StokeOS_release_gbl+StokeOS_release_Build_gbl
+global StokeOS_builddate_gbl ; StokeOS_builddate_gbl = "2014062706";     #6.0 (2012011901)  StokeOS Release 6.0 (2012071619
+global Software_OS_release_gbl ; Software_OS_release_gbl = "StokeOS Release "+StokeOS_ISSU_Apply_gbl + StokeOS_builddate_gbl
+global Stoke_bootloader_ver_gbl ; Stoke_bootloader_ver_gbl = "Stoke Bootloader Release "+StokeOS_ISSU_Apply_gbl + StokeOS_builddate_gbl
+global show_sys_ISSU_in_use_gbl ; show_sys_ISSU_in_use_gbl = StokeOS_ISSU_Apply_gbl+"  Current Version  StokeOS Release "+StokeOS_ISSU_Apply_gbl + StokeOS_builddate_gbl
+#global show_sys_ISSU_other_gbl ; show_sys_ISSU_other_gbl = "$StokeOS_release_gbl\\S5  .StokeOS Release $StokeOS_release_gbl\\S5 .$StokeOS_builddate_gbl";
+
+global Stoke_boot_ver_gbl ; Stoke_boot_ver_gbl = "StokeBoot Release 6.0 .2013011510.";
+global Stoke_boot_XGLC_ver_gbl ; Stoke_boot_XGLC_ver_gbl = "StokeBoot Release .6.0 2013011510.";
+
+global firmware_ver_gbl ; firmware_ver_gbl = "91";
+global firmware_ver_xglc_gbl ; firmware_ver_xglc_gbl = "0B";
+#diag path              xx
+global diag_ver_gbl ; diag_ver_gbl = Product_gbl + "/diag_" + Globals.CMPipe;
+#global diag_ver_gbl ; diag_ver_gbl = "layne010307";
+global tftp_copypath_diag_gbl ; tftp_copypath_diag_gbl = diag_ver_gbl+"/";   #diag072106, diag080706
+global tftp_bootpath_diag_gbl ; tftp_bootpath_diag_gbl = diag_ver_gbl+"/";
+
+global Diag_boot_ver_gbl ; Diag_boot_ver_gbl = "/stoke/bin/dia";
+#global Diag_boot_ver_gbl ; Diag_boot_ver_gbl = "2253225765.*/stoke/bin/dia";
+global Diag_boot_ver_cmd_gbl ; Diag_boot_ver_cmd_gbl = "cksum /stoke/bin/diag";
+
+#GLC redunancy settings  Check_GLC_Redundancy
+global glcredundant_gbl ; glcredundant_gbl = 0 ;
+#our	$noglcredundant_gbl = 1 ;
+
+##Default names for files copied
+	#global Stoke_image ; Stoke_image = "stoke.bin";
+    ##    global StokeS1_pkg ; StokeS1_pkg = "stokeS1.pkg";
+	#global Stoke_pkg ; Stoke_pkg = "stokepkg.bin";
+	#global Stoke_config ; Stoke_config = "stoke.cfg";
+	#global Stoke_uboot ; Stoke_uboot = "stokeboot.bin";
+	#global Stoke_ubootxglc ; Stoke_ubootxglc = "stokebootxglc.bin";
+	#global Stoke_bootloader ; Stoke_bootloader = "bootloader.bin";
+	#global Stoke_bootloader2 ; Stoke_bootloader2 = "bootloader2.bin";
+	#global Stoke_noodle ; Stoke_noodle = "noodle.bin";
+	#global Stoke_diag_glc ; Stoke_diag_glc = "diag_glc.bin";
+	#global Stoke_diag_xglc ; Stoke_diag_xglc = "diag_xglc.bin";
+	#global Stoke_onscript_GLC ; Stoke_onscript_GLC = "GLC.ksh";  # local script on cardbus for parallel memory tests during BI/Ext
+	#global Stoke_onscript_MC ; Stoke_onscript_MC = "IMC.ksh";
+	#global Stoke_onscript_XGLC ; Stoke_onscript_XGLC = "XGLC.ksh";
+	#global Format_40gig_MC ; Format_40gig_MC = "formatto40gigpartition.sh";
+	#global Format_MC ; Format_MC = "storageprep80.sh";
+	##global Diag_cfint_boot_gbl ; Diag_cfint_boot_gbl = "boot image file $Stoke_diag ";
+	#global Diag_boot_xglc_gbl ; Diag_boot_xglc_gbl = "boot image file /hd/mfg/$Stoke_diag_xglc ";
+	#global Diag_boot_glc_gbl ; Diag_boot_glc_gbl = "boot image file /hd/mfg/$Stoke_diag_xglc ";
+	#global Diag_cfint_boot_gbl ; Diag_cfint_boot_gbl = $Diag_boot_glc_gbl;
 	#print ("Current Software release: $release_name_global \n");
 	#print ("Current Diag release: $tftp_bootpath_diag_gbl\n");
     
@@ -116,20 +118,20 @@ def Globals_Product1 ():
     
     
 	## Stoke Specific Globals
-	#global $AX4000_IP       = 'AX4000';      # Updated by TestCtrl.cfg
-	#global $AX4000_USER     = 'AX4000';      # Updated by TestCtrl.cfg
-	#global $Bypass			= 0;			  # Controls command bypassing are we in a by pass section
-	#global $Cmd_Bypass			= 0;			  # Controls command bypassing, do we want to bypass code
-	#global $DefFanSpeed     = 'High';        # Updated by TestCtrl.cfg
-	##global $Debug_UUT     = 0;        	  	  # Updated by TestCtrl.cfg, Default off
-	##global $Development	= 0;      		  # Updated by TestCtrl.cfg, Default off
+	#global AX4000_IP ; AX4000_IP       = 'AX4000';      # Updated by TestCtrl.cfg
+	#global AX4000_USER ; AX4000_USER     = 'AX4000';      # Updated by TestCtrl.cfg
+	#global Bypass ; Bypass			= 0;			  # Controls command bypassing are we in a by pass section
+	#global Cmd_Bypass ; Cmd_Bypass			= 0;			  # Controls command bypassing, do we want to bypass code
+	#global DefFanSpeed ; DefFanSpeed     = 'High';        # Updated by TestCtrl.cfg
+	##global Debug_UUT ; Debug_UUT     = 0;        	  	  # Updated by TestCtrl.cfg, Default off
+	##global Development ; Development	= 0;      		  # Updated by TestCtrl.cfg, Default off
 	#global @Email_Config				= ('');       # Email notification list for Config tests
 	#global @Email_Config_CC				= ('');       # Email notification list for Config tests
 	#global @Email_Config_Records				= ('');       # Email notification list for Config tests
 	#global @Email_Ship				= ('');       # Email notification list for Config tests
 	#global @Email_Ship_CC				= ('');       # Email notification list for Config tests
 	#global @Email_Ship_Records				= ('');       # Email notification list for Config tests
-	#global $UUT_Ver_check	= 1; 			  # Default is to check for versions
+	#global UUT_Ver_check ; UUT_Ver_check	= 1; 			  # Default is to check for versions
 	## Hashes from parts.cfg, and part number files( need to be added as they are put into use)
 	#global %partnumber_hash = ('');            # Fixed 7/31/06 JSW
    	#global %partnumber_hash_out  = ('');
@@ -188,26 +190,26 @@ def Globals_Product1 ():
 
 
    	#global %partnumbers     = ('');
-   	#global $Printer       = 'none';      	  # Updated by TestCtrl.cfg
-   	#global $Post_GBL	= 0;				# Added for Detecting both Gen1 and Gen2 post
-   	#global $Post_N_GBL	= 1;				# Added for Detecting both Gen1 and Gen2 post
-   	#global $Last_KeyWord = '';				  # Last send command Keyword
+   	#global Printer ; Printer       = 'none';      	  # Updated by TestCtrl.cfg
+   	#global Post_GBL ; Post_GBL	= 0;				# Added for Detecting both Gen1 and Gen2 post
+   	#global Post_N_GBL ; Post_N_GBL	= 1;				# Added for Detecting both Gen1 and Gen2 post
+   	#global Last_KeyWord ; Last_KeyWord = '';				  # Last send command Keyword
    	#our	$Last_Send = '';				  # Holds last Arg from Send command
 
     #global %Cpld_data = ();   				  #Set by Get_CPLD_data
-    #global $slot_gbl = "" ;
-    #global $testmemorysize_gbl = 0;			  # Set by Get_CPLD_data, this is when we know global slot id
-    #global $SW55thlink_gbl = 0;				  # Enabled by TLV 3 = 1 on FIC , Bench test only
+    #global slot_gbl ; slot_gbl = "" ;
+    #global testmemorysize_gbl ; testmemorysize_gbl = 0;			  # Set by Get_CPLD_data, this is when we know global slot id
+    #global SW55thlink_gbl ; SW55thlink_gbl = 0;				  # Enabled by TLV 3 = 1 on FIC , Bench test only
     #global @SW55thlinkSlot_gbl = (0,0,0,0,0,0);				  # Enabled by TLV 3 = 1 on FIC , 5 Slot Chassis test only
 
 
 
-        ##global $mib_filter_gbl = ' ';
-    #global $mib_filter_1_gbl = '| grep  -e "gFrames" -e "disco" -e "dx-sw5" -e "ixf port"  -e "gBytes" -e "gUcast.." -e "sizeTo127"  -e "Pkts65to127" -e "OctetsTotalOK" -e "bBytes.." -e "UcPckts" -e "..FifoOvrn" -e "ollision" -e "Undersize" -e "Frags" -e "badCRC" -e "Err" -e "late coll" -e "jabber" ';
-    #global $mib_filter_2_gbl = '| grep -e "dx-sw5 port" -e "ixf port" -e "bBytes.." -e "ixf port"  -e  "gBytes..Lo" -e "gUcast.." -e "sizeTo127" -e "..FifoOvrn" -e "ollision" -e "Undersize" -e "Frags" -e "badCRC" -e "Err" -e "late coll" -e "jabber" -e "BAD" ';
-    #global $mib_filter_3_gbl = '| grep -e "..FifoOvrn" -e "ollision" -e "Undersize" -e "Frags" -e "badCRC" -e "Err" -e "late coll" -e "jabber" -e "BAD" ';
-    #global $mib_filter_4_gbl = 'if (grep -q -e "..FifoOvrn" -e "ollision" -e "Undersize" -e "Frags" -e "badCRC" -e "Err" -e "late coll" -e "jabber" -e "BAD" ' ;
-    #global $mib_filter_gbl = 'if (grep -q -e "gBytesTx" -e "gBytesRx" -e "gBytesRxLo" -e "gBytesTxLo" -e "RxOctetsTotalOK" -e "TxOctetsTotalOK" ' ;
+        ##global mib_filter_gbl ; mib_filter_gbl = ' ';
+    #global mib_filter_1_gbl ; mib_filter_1_gbl = '| grep  -e "gFrames" -e "disco" -e "dx-sw5" -e "ixf port"  -e "gBytes" -e "gUcast.." -e "sizeTo127"  -e "Pkts65to127" -e "OctetsTotalOK" -e "bBytes.." -e "UcPckts" -e "..FifoOvrn" -e "ollision" -e "Undersize" -e "Frags" -e "badCRC" -e "Err" -e "late coll" -e "jabber" ';
+    #global mib_filter_2_gbl ; mib_filter_2_gbl = '| grep -e "dx-sw5 port" -e "ixf port" -e "bBytes.." -e "ixf port"  -e  "gBytes..Lo" -e "gUcast.." -e "sizeTo127" -e "..FifoOvrn" -e "ollision" -e "Undersize" -e "Frags" -e "badCRC" -e "Err" -e "late coll" -e "jabber" -e "BAD" ';
+    #global mib_filter_3_gbl ; mib_filter_3_gbl = '| grep -e "..FifoOvrn" -e "ollision" -e "Undersize" -e "Frags" -e "badCRC" -e "Err" -e "late coll" -e "jabber" -e "BAD" ';
+    #global mib_filter_4_gbl ; mib_filter_4_gbl = 'if (grep -q -e "..FifoOvrn" -e "ollision" -e "Undersize" -e "Frags" -e "badCRC" -e "Err" -e "late coll" -e "jabber" -e "BAD" ' ;
+    #global mib_filter_gbl ; mib_filter_gbl = 'if (grep -q -e "gBytesTx" -e "gBytesRx" -e "gBytesRxLo" -e "gBytesTxLo" -e "RxOctetsTotalOK" -e "TxOctetsTotalOK" ' ;
 
 ##Declared in Init, (re)assigned here...
 
@@ -223,35 +225,35 @@ def Globals_Product1 ():
     ##5 slot mapping       Ch, S0, S1, S2, S3, S4,x,x,x,x,x,x,x,x,x,x,S15,x,x,S18,S19,x,S21,S22
     ##                     Chasss, Slot 0, Slot 1, Slot 2, Slot 3 , slot 4, S15 Alarm, S18  PEM A, S19 PEM B, S21 Fan 1, S19 Fan 2
     ##Full 5 slot Chassis        (1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,1,1,0,1,1)
-    #global $Full_Chassis_str_GBL = "none";
-    #global $Full_Chassis_GBL = 0;  # 0 = Not full chassis, 1 Full Chassis
-    #global $Full_Chassis_FRU_GBL = 0; # Chassis fru modules  chassis, alarm, fan pem
+    #global Full_Chassis_str_GBL ; Full_Chassis_str_GBL = "none";
+    #global Full_Chassis_GBL ; Full_Chassis_GBL = 0;  # 0 = Not full chassis, 1 Full Chassis
+    #global Full_Chassis_FRU_GBL ; Full_Chassis_FRU_GBL = 0; # Chassis fru modules  chassis, alarm, fan pem
     #global @Slot_INST_GBL = (0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);  # variable for Slot installed
-    #global $Slot_INST_0_1_GBL = 0;    #Product of Slot_INST_GBL
-    #global $Slot_INST_0_2_GBL = 0;    #Product of Slot_INST_GBL
-    #global $Slot_INST_0_3_GBL = 0;    #Product of Slot_INST_GBL
-    #global $Slot_INST_0_4_GBL = 0;    #Product of Slot_INST_GBL
-    #global $Slot_INST_1_2_GBL = 0;    #Product of Slot_INST_GBL
-    #global $Slot_INST_1_3_GBL = 0;    #Product of Slot_INST_GBL
-    #global $Slot_INST_1_4_GBL = 0;    #Product of Slot_INST_GBL
-    #global $Slot_INST_2_3_GBL = 0;    #Product of Slot_INST_GBL
-    #global $Slot_INST_2_4_GBL = 0;    #Product of Slot_INST_GBL
-    #global $Slot_INST_3_4_GBL = 0;    #Product of Slot_INST_GBL
+    #global Slot_INST_0_1_GBL ; Slot_INST_0_1_GBL = 0;    #Product of Slot_INST_GBL
+    #global Slot_INST_0_2_GBL ; Slot_INST_0_2_GBL = 0;    #Product of Slot_INST_GBL
+    #global Slot_INST_0_3_GBL ; Slot_INST_0_3_GBL = 0;    #Product of Slot_INST_GBL
+    #global Slot_INST_0_4_GBL ; Slot_INST_0_4_GBL = 0;    #Product of Slot_INST_GBL
+    #global Slot_INST_1_2_GBL ; Slot_INST_1_2_GBL = 0;    #Product of Slot_INST_GBL
+    #global Slot_INST_1_3_GBL ; Slot_INST_1_3_GBL = 0;    #Product of Slot_INST_GBL
+    #global Slot_INST_1_4_GBL ; Slot_INST_1_4_GBL = 0;    #Product of Slot_INST_GBL
+    #global Slot_INST_2_3_GBL ; Slot_INST_2_3_GBL = 0;    #Product of Slot_INST_GBL
+    #global Slot_INST_2_4_GBL ; Slot_INST_2_4_GBL = 0;    #Product of Slot_INST_GBL
+    #global Slot_INST_3_4_GBL ; Slot_INST_3_4_GBL = 0;    #Product of Slot_INST_GBL
     ##Can't use array varibles in cmdfiles
     #our	$Slot_INST_0_GBL = 0;
     #our	$Slot_INST_1_GBL = 0;
     #our	$Slot_INST_2_GBL = 0;
     #our	$Slot_INST_3_GBL = 0;
     #our	$Slot_INST_4_GBL = 0;
-    #global $Slot_INST_1_IMC_GBL  = 0;
-    #global $Slot_INST_1_GLC_GBL  = 0;
+    #global Slot_INST_1_IMC_GBL ; Slot_INST_1_IMC_GBL  = 0;
+    #global Slot_INST_1_GLC_GBL ; Slot_INST_1_GLC_GBL  = 0;
     ##Varibles for R1.1 Show env(does not work with older rev cards)
     #our	$Slot_SHOWENV_0_GBL = 0;
     #our	$Slot_SHOWENV_1_GBL = 0;
     #our	$Slot_SHOWENV_2_GBL = 0;
     #our	$Slot_SHOWENV_3_GBL = 0;
     #our	$Slot_SHOWENV_4_GBL = 0;
-    #global $Production_GBL = 1;  # Variable to indicate in Production or final configuration test, Default Production mode
+    #global Production_GBL ; Production_GBL = 1;  # Variable to indicate in Production or final configuration test, Default Production mode
     ##Varible used in "Set fab snake xxxxx" command, sets card type by slot, 0 = not inst, 1 = MC 2 = GLC 2=port, 4 = GLC 4 port
     ##Vales set when serial number collected
     #our	$Slot_CARD_TYPE_INST_0_GBL = 0;
@@ -260,15 +262,15 @@ def Globals_Product1 ():
     #our	$Slot_CARD_TYPE_INST_3_GBL = 0;
     #our	$Slot_CARD_TYPE_INST_4_GBL = 0;
     ##Default used for  Traffic snake test, changed by Get_Mesh_slots
-    #global $internal_traffic_test_time_GBL = 900;
-    #global $internal_traffic_test_timeout_GBL = 1000;
-    #global $internal_traffic_test_time_msg_GBL = "Send Traffic for $internal_traffic_test_time_GBL Seconds";
+    #global internal_traffic_test_time_GBL ; internal_traffic_test_time_GBL = 900;
+    #global internal_traffic_test_timeout_GBL ; internal_traffic_test_timeout_GBL = 1000;
+    #global internal_traffic_test_time_msg_GBL ; internal_traffic_test_time_msg_GBL = "Send Traffic for $internal_traffic_test_time_GBL Seconds";
     ##Default fan speeds changed by get_mesh_slots and testctrl.cfg
-    #global $FanSpeed1_GBL = "wr i2c 9501 fan1 gpio E7"  ;
-    #global $FanSpeed2_GBL = "wr i2c 9501 fan2 gpio E7"  ;
-    #global $Fan2Speed1_GBL = "wr i2c adm1029 1 60 BB";
-    #global $Fan2Speed2_GBL = "wr i2c adm1029 2 60 BB";
-    #global $FanSpeed_MSG_GBL = "All Fans on High"  ;
+    #global FanSpeed1_GBL ; FanSpeed1_GBL = "wr i2c 9501 fan1 gpio E7"  ;
+    #global FanSpeed2_GBL ; FanSpeed2_GBL = "wr i2c 9501 fan2 gpio E7"  ;
+    #global Fan2Speed1_GBL ; Fan2Speed1_GBL = "wr i2c adm1029 1 60 BB";
+    #global Fan2Speed2_GBL ; Fan2Speed2_GBL = "wr i2c adm1029 2 60 BB";
+    #global FanSpeed_MSG_GBL ; FanSpeed_MSG_GBL = "All Fans on High"  ;
 
 
     #####################################################################
@@ -1331,13 +1333,13 @@ def Globals_Product1 ():
 #}
 ##__________________________________________________________________________
 ##XGLC Added Variables
-#global $crc32_match_gbl = 0;
-#global $crc32_str_gbl = "na";
-#global $postinfo_XGLC_str_found = 0;
-#global $xfersizehex_str_gbl = "na";
-#global $xfersizebyte_str_gbl = "na";
-#global $linkinfo_XGLC_str_found = 0;
-#global $compare_gbl = 0;
+#global crc32_match_gbl ; crc32_match_gbl = 0;
+#global crc32_str_gbl ; crc32_str_gbl = "na";
+#global postinfo_XGLC_str_found ; postinfo_XGLC_str_found = 0;
+#global xfersizehex_str_gbl ; xfersizehex_str_gbl = "na";
+#global xfersizebyte_str_gbl ; xfersizebyte_str_gbl = "na";
+#global linkinfo_XGLC_str_found ; linkinfo_XGLC_str_found = 0;
+#global compare_gbl ; compare_gbl = 0;
 #global @XGLC_1gigSFP_gbl = ([0,0,0,0],
 						  #[0,0,0,0],
 						  #[0,0,0,0],
@@ -1363,12 +1365,12 @@ def Globals_Product1 ():
 						  #[0,0,0,0],
 						  #[0,0,0,0],
 						  #[0,0,0,0],	);   #[Slot][Port]
-#global $SFPCount_gbl=0;
-    ##global $XGLC_10gigSFP_detected_gbl = 0;
-    ##global $XGLC_1gigSFP_detected_gbl = 0;
+#global SFPCount_gbl ; SFPCount_gbl=0;
+    ##global XGLC_10gigSFP_detected_gbl ; XGLC_10gigSFP_detected_gbl = 0;
+    ##global XGLC_1gigSFP_detected_gbl ; XGLC_1gigSFP_detected_gbl = 0;
 
 
-#global $checksfppower_gbl=0;
+#global checksfppower_gbl ; checksfppower_gbl=0;
 ##global %SFPData = (
 ##            'TYPE'        => 'null',                   # Actual Test Time (excl. wait time) (secs)
 ##            'Vendor'   => 'null',                  # Diag version extracted from header
@@ -1381,7 +1383,7 @@ def Globals_Product1 ():
 ##global @SFPData_slot_ar = (@SFPData_port_ar,@SFPData_port_ar,@SFPData_port_ar,@SFPData_port_ar,@SFPData_port_ar,@SFPData_port_ar);
 #global @SFPData_slot_ar = ();
 ##push @SFPData_slot_ar, {@SFPData_port_ar}; #Push a copy , IMC Slot0
-
+print ("Product1 Globals init .. Done:%i" % Globals.Debug)
 #__________________________________________________________________________
 
-1;
+

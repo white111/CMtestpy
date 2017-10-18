@@ -30,10 +30,14 @@ if "CMtestVersion" not in globals() : CMtestVersion={}
 CMtestVersion['cmtest1'] = VER + CVS_VER
 #____________________________________________________________________________
 
-import Init_Product1   # Gen1 hardware
 import Globals
+import Init_Product1   # Gen1 hardware
+
 import Stats
 import Util
+import Logs
+import Connect
+import os.path
 #use SSX2;   # Gen1 hardware
 #use SSX3;   # Gen2 Hardware
 
@@ -100,7 +104,7 @@ def Get_Data(Key, Data):       # Called by &Screen_Data to parse the comm buffer
     #
 
 #__________________________________________________________________________
-def Menu_Exit(y):
+def Menu_Exit():
     Globals.Stats['Status'] = 'Exit'
     Stats.Update_All 
     Util.Exit(0,'') 
@@ -140,122 +144,142 @@ def Menu_Show(Menu):    #!!! Move this to
         Desc = Globals.Menu_Desc[i-1]
         if not Desc == '' : 
             Desc = "[{}]".format(Desc) 
-        print ( "\t{} {} {}\n".format(i,Globals.Menu_List[i],Desc))
+        print ( "\t{} {} {}\n".format(i+1,Globals.Menu_List[i],Globals.Menu_Desc[i]))
     print("\n")
     y=0
-    while (not y or (y > len(Globals.Menu_List) + 1)) :
-        y = Util.PETC('Select item #?')
-
+    
+    while ( y==0 or y > len(Globals.Menu_List) + 1) :
+        y = int(Util.PETC('Select item #?'))
+    
     y -=1                # We're base 0, not 1
-
-    Globals.TestData['SW_Ver']= Globals_Product1.Software_OS_release_gbl
-    Globals.TestData['Diag_Ver'] = Globals_Product1.diag_ver_gbl
+    
+    Globals.TestData['SW_Ver']= Init_Product1.Software_OS_release_gbl
+    Globals.TestData['Diag_Ver'] = Init_Product1.diag_ver_gbl
     Globals.Stats['Status'] = 'Started'
-    Stats.Update_All ;
-    print("Exec\'ing $Menu_List[{}]...\n".format(y))
-    try:
-        func = getattr("Menu",Menu_List)
-    except AttributeError:
-        print ('function not found "%s" (%s)' % (funcname, y))
-    else:
-        func(y)    
+    Stats.Update_All 
+    print("Exec\'ing {}[{}]...\n".format(Globals.Menu_Cmd[y],y))
+    #locals()[Globals.Menu_Cmd[y]]()
+    #try:
+    if Globals.Menu1 == '' :
+        if Globals.Debug: print ("Exc Func Menu.{}".format(Globals.Menu_Cmd[y]+"()"))
+        method = eval(Globals.Menu_Cmd[y])
+        method()            
+            #func = getattr(Menu,Globals.Menu_Cmd[y],"Menu_main")
+        #else :
+            #method = eval(Menu,Globals.Menu1)
+            #method()            
+            ##func = getattr(Menu,Globals.Menu1)
+            
+    #except AttributeError:
+        #print ('function not found "%s" (%s)' % (Globals.Menu_Cmd[y], y))
+        ##Run_Prog_Example()
+    #else:
+        #method = eval("Menu_main")
+        #method()
     #&Exec ($Menu_Cmd [$y]);     # Find the sub [last arg in Menu_add_...]
     return
 
-#__________________________________________________________________________
+#_____________________________________________________________________________
 
 def Menu_main():
-    Init_Product1.Globals_Product1;
+    #Init_Product1.Globals_Product1;
     Globals.Menu_List = []
     Globals.Menu_Desc = []
     Globals.Menu_Cmd  = []
     if (Globals.Debug_UUT == 1 or Globals.Development == 1) : Globals.User_Level = 0
-    Globals.CmdFilePath = Globals.GP_Path + "/cmdfiles/SSX/Gen1"
+    Globals.CmdFilePath = os.path.join(Globals.GP_Path , "cmdfiles","SSX","Gen1")
     #use Init_SSX;  # <- Stoke Specific Globals defined here
-    Init_Product1.Globals_Product1
+    #Init_Product1.Globals_Product1
 
     Menu_Add ('Exit', '', 'Menu_Exit')
     if (Globals.GlobalVar['User_Level'] > 1  or Globals.User_Level == 0): Menu_Add ('CMTEST1', 'CMTEST1', 'CMtest1_Menu_main') 
     if (Globals.GlobalVar['User_Level'] > 1  or Globals.User_Level == 0): Menu_Add ('CMTEST2', 'CMTEST2', 'CMtest2_Menu_main') 
 
-
     if ( Globals.Menu1 != '') : 
         Menu_Add ('Test', 'Regression test vehicle', 'Run_Test')
 
-
-    if Globals.Menu1 == 0 :
-        Menu_Show ( 'Main' )
-    else :
-        Menu_Exec (Menu1-1)
+    Menu_Show ( 'Main' )
+  
 #______________________________________________________________________________________
 
 def CMtest1_Menu_main():
-    Globals_Product1;
-    GLobals.Menu_List = []
+    #Globals_Product1;
+    Globals.Menu_List = []
     Globals.Menu_Desc = []
     Globals.Menu_Cmd  = []
     if (Globals.Debug_UUT == 1 or Globals.Development == 1) : Globals.User_Level = 0
-    Globals.CmdFilePath = Globals.GP_Path + "/cmdfiles/SSX/Gen1"
+    Globals.CmdFilePath = os.path.join(Globals.GP_Path , "cmdfiles","SSX","Gen1")
     #use Init_SSX;  # <- Stoke Specific Globals defined here
-    Globals_Product1
+    #Globals_Product1
 
     Menu_Add ('Exit', '', 'Menu_Exit');
-    if Globals.GlobalVar['User_Level'] > 1  or Globals.User_Level == 0: Menu_Add ('Gen 1', 'Test 1 Gig interface product', 'SSX_Menu1') 
-    if Globals.GlobalVar['User_Level'] > 1  or Globals.User_Level == 0: Menu_Add ('Gen 2', 'Test 10 Gig interface product', 'SSX_Menu2') 
-
+    if Globals.GlobalVar['User_Level'] > 1  or Globals.User_Level == 0: Menu_Add ('Gen 1', 'Test 1 Gig interface product', 'Cmtest1_Menu1') 
+    if Globals.GlobalVar['User_Level'] > 1  or Globals.User_Level == 0: Menu_Add ('Gen 2', 'Test 10 Gig interface product', 'Cmtest1_Menu2') 
 
     if ( Globals.Menu1 != '') : 
         Menu_Add ('Test', 'Regression test vehicle', 'Run_Test')
 
+    Menu_Show ( 'Main' )
+    return()
+#__________________________________________________________________________
+def CMtest2_Menu_main():
+    #Globals_Product1;
+    Globals.Menu_List = []
+    Globals.Menu_Desc = []
+    Globals.Menu_Cmd  = []
+    if (Globals.Debug_UUT == 1 or Globals.Development == 1) : Globals.User_Level = 0
+    Globals.CmdFilePath = os.path.join(Globals.GP_Path , "cmdfiles","SSX","Gen1")
+    #use Init_SSX;  # <- Stoke Specific Globals defined here
+    #Globals_Product1
 
-    if Globals.Menu1 == '' :
-        Menu_Show ( 'Main' )
-    else :
-        Menu_Exec (Menu1-1)
+    Menu_Add ('Exit', '', 'Menu_Exit');
+    if Globals.GlobalVar['User_Level'] > 1  or Globals.User_Level == 0: Menu_Add ('Gen 1', 'Test 1 Gig interface product', 'Cmtest1_Menu1') 
+    if Globals.GlobalVar['User_Level'] > 1  or Globals.User_Level == 0: Menu_Add ('Gen 2', 'Test 10 Gig interface product', 'Cmtest1_Menu2') 
 
+    if ( Globals.Menu1 != '') : 
+        Menu_Add ('Test', 'Regression test vehicle', 'Run_Test')
 
+    Menu_Show ( 'Main' )
+    return()
 #__________________________________________________________________________
 def Cmtest1_Menu1():
-    GLobals.Menu_List = []
+    Globals.Menu_List = []
     Globals.Menu_Desc = []
     Globals.Menu_Cmd  = []
     if (Globals.Debug_UUT == 1 or Globals.Development == 1) : User_Level = 0 
     Menu_Add ('Exit', '', 'Menu_main')
-    Globals.CmdFilePath = Globals.GP_Path + "/cmdfiles/SSX/Gen1"
-    if Globals.GlobalVar['User_Level'] > 1  or Globals.User_Level == 0 : Menu_Add ('Bench Program', 'Initial PCB bringup Programming', 'Run_Prog')
-    if Globals.GlobalVar['User_Level'] > 2  or Globals.User_Level == 0 : Menu_Add ('Bench Test', 'Initial PCB bringup', 'Run_Bench_Test') 
-    if Globals.GlobalVar['User_Level'] > 3 or Globals.User_Level == 0: Menu_Add ('Chassis Pre BI', 'Chassis Test IMC and GLC Pre-BI', 'Run_Chassis_Test_Pre_BI') 
-    if Globals.GlobalVar['User_Level'] > 4 or Globals.User_Level == 0: Menu_Add ('Chassis BI', '12 Hour BI test', 'Run_Chassis_BI') 
-    if Globals.GlobalVar['User_Level'] > 5 or Globals.User_Level == 0: Menu_Add ('Chassis POST BI', 'Chassis Test IMC and GLC POST-BI', 'Run_Chassis_Test_Post_BI') 
-    if Globals.GlobalVar['User_Level'] > 7 or Globals.User_Level == 0: Menu_Add ('Chassis Config', 'Chassis Configuration', 'Run_Chassis_Config') 
-    if Globals.GlobalVar['User_Level'] > 7 or Globals.User_Level == 0: Menu_Add ('Chassis Extended', 'Long term system tests', 'Run_Chassis_Extended') 
-    if Globals.GlobalVar['User_Level'] > 7 or Globals.User_Level == 0: Menu_Add ('Chassis ORT', 'MTBF Validation', 'Run_Chassis_ORT') 
-    if Globals.GlobalVar['User_Level'] > 7 or Globals.User_Level == 0: Menu_Add ('Chassis Program', 'Chassis Program', 'Run_Chassis_Prog')
-    if Globals.GlobalVar['User_Level'] > 7 or Globals.User_Level == 0: Menu_Add ('Chassis TEST Pre BI', 'Chassis TEST', 'Run_Chassis_TEST_PRE') 
-    if Globals.GlobalVar['User_Level'] > 7 or Globals.User_Level == 0: Menu_Add ('Chassis TEST Post BIProgram', 'Chassis TEST', 'Run_Chassis_TEST_POST')
-    if Globals.GlobalVar['User_Level'] > 7 or Globals.User_Level == 0: Menu_Add ('Chassis TEST Functionl Full', 'Chassis TEST', 'Run_Chassis_Functional_Full') 
-    if Globals.GlobalVar['User_Level'] > 7 or Globals.User_Level == 0: Menu_Add ('Order Entry', 'Enter Sales Order', 'Run_GetOrder')
-    if Globals.GlobalVar['User_Level'] > 7 or Globals.User_Level == 0: Menu_Add ('Debug', 'Debug Sub menu', 'SSX_Debug_Menu1') 
-
-
+    Globals.CmdFilePath = os.path.join(Globals.GP_Path , "cmdfiles","SSX","Gen1")
+    if Globals.GlobalVar['User_Level'] > 1  or Globals.User_Level == 0 : Menu_Add ('Bench Program', 'Initial PCB bringup Programming', 'Run_Prog_Example')
+    if Globals.GlobalVar['User_Level'] > 2  or Globals.User_Level == 0 : Menu_Add ('Bench Test', 'Initial PCB bringup', 'Run_Bench_Test_Example') 
+    if Globals.GlobalVar['User_Level'] > 3 or Globals.User_Level == 0: Menu_Add ('Chassis Pre BI', 'Chassis Test IMC and GLC Pre-BI', 'Run_Chassis_Test_Pre_BI_Example') 
+    if Globals.GlobalVar['User_Level'] > 4 or Globals.User_Level == 0: Menu_Add ('Chassis BI', '12 Hour BI test', 'Run_Chassis_BI_Example') 
+    if Globals.GlobalVar['User_Level'] > 5 or Globals.User_Level == 0: Menu_Add ('Chassis POST BI', 'Chassis Test IMC and GLC POST-BI', 'Run_Chassis_Test_Post_BI_Example') 
+    if Globals.GlobalVar['User_Level'] > 7 or Globals.User_Level == 0: Menu_Add ('Chassis Config', 'Chassis Configuration', 'Run_Chassis_Config_Example') 
+    if Globals.GlobalVar['User_Level'] > 7 or Globals.User_Level == 0: Menu_Add ('Chassis Extended', 'Long term system tests', 'Run_Chassis_Extended_Example') 
+    if Globals.GlobalVar['User_Level'] > 7 or Globals.User_Level == 0: Menu_Add ('Chassis ORT', 'MTBF Validation', 'Run_Chassis_ORT_Example') 
+    if Globals.GlobalVar['User_Level'] > 7 or Globals.User_Level == 0: Menu_Add ('Chassis Program', 'Chassis Program', 'Run_Chassis_Prog_Example')
+    if Globals.GlobalVar['User_Level'] > 7 or Globals.User_Level == 0: Menu_Add ('Chassis TEST Pre BI', 'Chassis TEST', 'Run_Chassis_TEST_PRE_Example') 
+    if Globals.GlobalVar['User_Level'] > 7 or Globals.User_Level == 0: Menu_Add ('Chassis TEST Post BIProgram', 'Chassis TEST', 'Run_Chassis_TEST_POST_Example')
+    if Globals.GlobalVar['User_Level'] > 7 or Globals.User_Level == 0: Menu_Add ('Chassis TEST Functionl Full', 'Chassis TEST', 'Run_Chassis_Functional_Full_Example') 
+    if Globals.GlobalVar['User_Level'] > 7 or Globals.User_Level == 0: Menu_Add ('Order Entry', 'Enter Sales Order', 'Run_GetOrder_Example')
+    if Globals.GlobalVar['User_Level'] > 7 or Globals.User_Level == 0: Menu_Add ('Debug', 'Debug Sub menu', 'Cmtest1_Debug_Menu1') 
+    
     if ( Globals.Menu1 != ''):
         Menu_Add ('Test', 'Regression test vehicle', 'Run_Test');
 #        &Menu_Add ('Test_ssh', 'Regression test vehicle', 'Run_Test_ssh');
 
-    if (Globals.Menu1 == ''):
-        Menu_Show ( 'Main' )
-    else:
-        Menu_Exec (Globals.Menu1-1)
+    Menu_Show ( 'Main' )
+ 
     return()
 
 #__________________________________________________________________________
 
 def CMtest1_Debug_Menu1():
-    GLobals.Menu_List = []
+    Globals.Menu_List = []
     Globals.Menu_Desc = []
     Globals.Menu_Cmd  = []
     if (Globals.Debug_UUT == 1 or Globals.Development == 1) : User_Level = 0
-    Globals.CmdFilePath = Globals.GP_Path +"/cmdfiles/SSX/Gen1"
+    Globals.CmdFilePath = os.path.join(Globals.GP_Path , "cmdfiles","SSX","Gen1")
     Menu_Add ('Exit', '', 'Menu_main');
     if Globals.GlobalVar['User_Level'] == 0: Menu_Add ('Debug', 'Temporary', "Run_Debug") 
     if Globals.GlobalVar['User_Level'] == 0: Menu_Add ('Debug', 'Power Cycle GLC on Bench', "Run_Debug_GLC_Bench_Power") 
@@ -265,52 +289,47 @@ def CMtest1_Debug_Menu1():
     if ( Globals.Menu1 != '') :
         Menu_Add ('Test', 'Regression test vehicle', 'Run_Test');
 
-    if (Globals.Menu1 == '') :
-        Menu_Show ( 'Main' );
-    else :
-        Menu_Exec (Globals.Menu1-1);
+    Menu_Show ( 'Main' );
+
     return()
 
 #__________________________________________________________________________
 
 def Cmtest1_Menu2 ():   # Gen 2 boards
-    GLobals.Menu_List = []
+    Globals.Menu_List = []
     Globals.Menu_Desc = []
     Globals.Menu_Cmd  = []
-    Globals.CmdFilePath = Globals.GP_Path+"/cmdfiles/SSX/Gen2"
+    Globals.CmdFilePath = os.path.join(Globals.GP_Path , "cmdfiles","SSX","Gen2")
     if (Globals.Debug_UUT == 1 or Globals.Development == 1) : User_Level = 0 
     Menu_Add ('Exit', '', 'Menu_main');
-    if Globals.GlobalVar['User_Level'] > 1  or Globals.User_Level == 0: Menu_Add ('Bench Program XGLC', 'Initial PCB bringup Programming', 'Run_Prog2')
-    if Globals.GlobalVar['User_Level'] > 2  or Globals.User_Level == 0: Menu_Add ('Bench Test XGLC', 'Initial PCB bringup', 'Run_Bench_Test2') 
-    if Globals.GlobalVar['User_Level'] > 3  or Globals.User_Level == 0: Menu_Add ('Chassis Pre BI XGLC', 'Chassis Test IMC and XGLC Pre-BI', 'Run_Chassis_Test_Pre_BI_XGLC') 
-    if Globals.GlobalVar['User_Level'] > 4  or Globals.User_Level == 0: Menu_Add ('Chassis BI XGLC', 'Chassis Test IMC and XGLC BI', 'Run_Chassis_Test_BI_XGLC') 
-    if Globals.GlobalVar['User_Level'] > 5  or Globals.User_Level == 0: Menu_Add ('Chassis POST BI XGLC', 'Chassis Test IMC and XGLC POST-BI', 'Run_Chassis_Test_Post_BI_XGLC') 
-    if Globals.GlobalVar['User_Level'] > 6  or Globals.User_Level == 0: Menu_Add ('Chassis Config XGLC', 'Chassis Test Config', 'Run_Chassis_Test_Config_XGLC') 
-    if Globals.GlobalVar['User_Level'] > 7  or Globals.User_Level == 0: Menu_Add ('Chassis Extended XGLC', 'Long term system tests', 'Run_Chassis_Extended_XGLC') 
-    if Globals.GlobalVar['User_Level'] > 7  or Globals.User_Level == 0: Menu_Add ('Chassis ORT XGLC', 'Long term system tests', 'Run_Chassis_ORT_XGLC') 
-    if Globals.GlobalVar['User_Level'] > 7  or Globals.User_Level == 0: Menu_Add ('Chassis Program', 'Program chassis', 'Run_Chassis_Prog_gen2') 
-    if Globals.GlobalVar['User_Level'] > 7  or Globals.User_Level == 0: Menu_Add ('Chassis TEST Pre BI', 'Chassis TEST', 'Run_Chassis_TEST_PRE_gen2') 
-    if Globals.GlobalVar['User_Level'] > 7  or Globals.User_Level == 0: Menu_Add ('Chassis TEST Post BIProgram', 'Chassis TEST', 'Run_Chassis_TEST_POST_gen2') 
-    if Globals.GlobalVar['User_Level'] > 7  or Globals.User_Level == 0: Menu_Add ('Debug Gen 2', 'Debug Sub menu', 'SSX_Debug_Menu2') 
+    if Globals.GlobalVar['User_Level'] > 1  or Globals.User_Level == 0: Menu_Add ('Bench Program XGLC', 'Initial PCB bringup Programming', 'Run_Prog2_Example')
+    if Globals.GlobalVar['User_Level'] > 2  or Globals.User_Level == 0: Menu_Add ('Bench Test XGLC', 'Initial PCB bringup', 'Run_Bench_Test2_Example') 
+    if Globals.GlobalVar['User_Level'] > 3  or Globals.User_Level == 0: Menu_Add ('Chassis Pre BI XGLC', 'Chassis Test IMC and XGLC Pre-BI', 'Run_Chassis_Test_Pre_BI_XGLC_Example') 
+    if Globals.GlobalVar['User_Level'] > 4  or Globals.User_Level == 0: Menu_Add ('Chassis BI XGLC', 'Chassis Test IMC and XGLC BI', 'Run_Chassis_Test_BI_XGLC_Example') 
+    if Globals.GlobalVar['User_Level'] > 5  or Globals.User_Level == 0: Menu_Add ('Chassis POST BI XGLC', 'Chassis Test IMC and XGLC POST-BI', 'Run_Chassis_Test_Post_BI_XGLC_Example') 
+    if Globals.GlobalVar['User_Level'] > 6  or Globals.User_Level == 0: Menu_Add ('Chassis Config XGLC', 'Chassis Test Config', 'Run_Chassis_Test_Config_XGLC_Example') 
+    if Globals.GlobalVar['User_Level'] > 7  or Globals.User_Level == 0: Menu_Add ('Chassis Extended XGLC', 'Long term system tests', 'Run_Chassis_Extended_XGLC_Example') 
+    if Globals.GlobalVar['User_Level'] > 7  or Globals.User_Level == 0: Menu_Add ('Chassis ORT XGLC', 'Long term system tests', 'Run_Chassis_ORT_XGLC_Example') 
+    if Globals.GlobalVar['User_Level'] > 7  or Globals.User_Level == 0: Menu_Add ('Chassis Program', 'Program chassis', 'Run_Chassis_Prog_gen2_Example') 
+    if Globals.GlobalVar['User_Level'] > 7  or Globals.User_Level == 0: Menu_Add ('Chassis TEST Pre BI', 'Chassis TEST', 'Run_Chassis_TEST_PRE_gen2_Example') 
+    if Globals.GlobalVar['User_Level'] > 7  or Globals.User_Level == 0: Menu_Add ('Chassis TEST Post BIProgram', 'Chassis TEST', 'Run_Chassis_TEST_POST_gen2_Example') 
+    if Globals.GlobalVar['User_Level'] > 7  or Globals.User_Level == 0: Menu_Add ('Debug Gen 2', 'Debug Sub menu', '_Debug_Menu2_Example') 
 
     if ( Globals.Menu1 != ''):
         Menu_Add ('Test', 'Regression test vehicle', 'Run_Test');
 #        &Menu_Add ('Test_ssh', 'Regression test vehicle', 'Run_Test_ssh');
 
+    Menu_Show ( 'Main' )
 
-    if (Globals.Menu1 == '') :
-        Menu_Show ( 'Main' )
-    else :
-        Menu_Exec (Globals.Menu1-1);
     return()
 
 #_______________________________________________________________________________
 
-def Cmtest_Debug_Menu2():   # Gen 2 boards
-    GLobals.Menu_List = []
+def Cmtest1_Debug_Menu2():   # Gen 2 boards
+    Globals.Menu_List = []
     Globals.Menu_Desc = []
     Globals.Menu_Cmd  = []
-    Globals.CmdFilePath = Globals.GP_Path+"/cmdfiles/SSX/Gen2"
+    Globals.CmdFilePath = os.path.join(Globals.GP_Path , "cmdfiles","SSX","Gen2")
     if (Globals.Debug_UUT == 1 or Globals.Development == 1): Globals.User_Level = 0 
     Menu_Add ('Exit', '', 'Menu_main')
     if Globals.GlobalVar['User_Level'] > 5  or Globals.User_Level == 0: Menu_Add ('Debug Bench Test XGLC', 'Debug', 'Run_Bench_Debug')
@@ -325,17 +344,11 @@ def Cmtest_Debug_Menu2():   # Gen 2 boards
     if Globals.GlobalVar['User_Level'] > 5  or Globals.User_Level == 0: Menu_Add ('Debug', 'Debug XGLC Flashimage', 'Run_Debug_Flashimage_XGLC') 
     if Globals.GlobalVar['User_Level'] > 5  or Globals.User_Level == 0: Menu_Add ('Debug', 'Debug', 'Run_Debug_Gen2') 
 
-
-
     if (Globals.Menu1 != '') :
         Menu_Add ('Test', 'Regression test vehicle', 'Run_Test');
 #        &Menu_Add ('Test_ssh', 'Regression test vehicle', 'Run_Test_ssh');
 
-
-    if (Globals.Menu1 == '') :
-        Menu_Show ( 'Main' )
-    else :
-        Menu_Exec (Globals.Menu1-1)
+    Menu_Show ( 'Main' )
 
     return()
 
@@ -343,12 +356,12 @@ def Cmtest_Debug_Menu2():   # Gen 2 boards
 def Run_Debug_GLC_Bench_Power_Example():
             #caller(0))[3];
 
-    Cmd_File = Globals.CmdFilePath+"/Debug_Bench_GLC_Powercyle.dat";
+    Cmd_File = os.path.join(Globals.CmdFilePath,"Debug_Bench_GLC_Powercyle.dat");
     print("Debug")
     Globals.TestData['TID'] = 'DEBUG'
     Globals.Exit_On_Timeout = 1
 
-    Cmd_Expect( 'Serial', Globals.ComPort, GLobal.Cmd_File );
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Global.Cmd_File );
 
     Final()
     returm(0)
@@ -356,175 +369,175 @@ def Run_Debug_GLC_Bench_Power_Example():
 def Run_Debug_IMC_Bench_Power_Example():
             #caller(0))[3];
 
-    Cmd_File = Globals.CmdFilePath+"/Debug_Bench_IMC_Powercyle.dat";
+    Cmd_File = os.path.join(Globals.CmdFilePath,"Debug_Bench_IMC_Powercyle.dat");
     print("Debug")
     Globals.TestData['TID'] = 'DEBUG'
     Globals.Exit_On_Timeout = 1
-    Cmd_Expect( 'Serial', Globals.ComPort, GLobal.Cmd_File );
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Global.Cmd_File );
     Final()
     returm(0)
 #__________________________________________________________________________
 def Run_Debug_Chassis_BI_Example():
 
-    Cmd_File = Globals.CmdFilePath+"/Debug_Chassis_BI.dat"
+    Cmd_File = os.path.join(Globals.CmdFilePath,"Debug_Chassis_BI.dat")
     print("Debug")
     Globals.TestData['TID'] = 'DEBUG'
     Globals.Exit_On_Timeout = 1
-    Cmd_Expect( 'Serial', Globals.ComPort, GLobal.Cmd_File );
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Global.Cmd_File );
     Final()
     returm(0)
 #__________________________________________________________________________
 def Run_GetOrder_Example():
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Order_entry.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Order_entry.dat")
 
     Globals.TestData['TID']= 'SO'
     Globals.Exit_On_Timeout = 0
-    XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File );
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File );
 
     Final()
     return()
 #__________________________________________________________________________
 def Run_Chassis_Extended_Example():
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Chassis_Extended.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_Extended.dat")
     Globals.TestData['TID'] = 'EXT'
     Globals.Exit_On_Timeout = 0
-    XML_Header()# Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File );
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File );
     Final()
     return()
 
 #__________________________________________________________________________
 def Run_Chassis_TEST_PRE_Example():
-    Globals.Cmd_File = Globals.CmdFilePath+"/Chassis_test.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_test.dat")
 
 
     Globals.TestData['TID'] = 'CHP'
     Globals.Exit_On_Timeout = 1
-    XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
     Final()
     return()
 #__________________________________________________________________________
 def Run_Chassis_TEST_PRE_gen2_Example():
-    Globals.Cmd_File = Globals.CmdFilePath+"/Chassis_test_gen2.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_test_gen2.dat")
 
     Globals.TestData['TID'] = 'CHP'
     Globals.Exit_On_Timeout = 1
-    XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
 #__________________________________________________________________________
 def Run_Chassis_TEST_POST_Example():
-    Cmd_File = Globals.CmdFilePath+"/Chassis_test.dat"
+    Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_test.dat")
 
     Globals.TestData['TID'] = 'CHF'
     Globals.Exit_On_Timeout = 1
-    XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File );
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File );
     Final()
     return()
 #__________________________________________________________________________
 def Run_Chassis_TEST_POST_gen2_Example():
-    Globals.Cmd_File = Globals.CmdFilePath+"/Chassis_test_gen2.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_test_gen2.dat")
     Globals.TestData['TID'] = 'CHF'
     Globals.Exit_On_Timeout = 1
-    XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File );
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File );
     Final()
     return()
 #__________________________________________________________________________
 def Run_Chassis_Config_Example():
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Chassis_Config.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_Config.dat")
     TestData['TID'] = 'SHIP'
     Exit_On_Timeout = 1
-    XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File );
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File );
     Final()
     return()
 #__________________________________________________________________________
 def Run_Chassis_Prog_Example():
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Chassis_Prog.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_Prog.dat")
     Globals.TestData['TID'] = 'Program'
     Globals.Exit_On_Timeout = 1
-    XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stokee
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
     Final()
     return()
 
 #__________________________________________________________________________
 def Run_Chassis_Prog_gen2_Example():
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Chassis_Prog_gen2.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_Prog_gen2.dat")
     Globals.TestData['TID'] = 'Program'
     Globals.Exit_On_Timeout = 1
-    XML_Header(); # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File );
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File );
 
     Final()
     return()
 #__________________________________________________________________________
 def Run_Chassis_Functional_Full_Example():
-    Globals.Cmd_File = GLobals.CmdFilePath+"/Chassis_Functional_Full.dat";
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_Functional_Full.dat");
     Globals.TestData['TID'] = 'CHA'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
     Final()
     return()
 #__________________________________________________________________________
 
 def Run_Chassis_Test_Post_BI_Example():
-    Globals.Cmd_File = Globals.CmdFilePath/Chassis_Post_BI.dat
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_Post_BI.dat")
     Globals.TestData['TID'] = 'FST'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
 #__________________________________________________________________________
 def Run_Chassis_BI_Example():
-    Globals.Cmd_File = Globals.CmdFilePath+"/Chassis_BI.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_BI.dat")
     TestData['TID'] = 'BI'
     Globals.Exit_On_Timeout = 1
-    XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
     Final()
     return()
 #__________________________________________________________________________
 def Run_Chassis_ORT_Example():
-    Globals.Cmd_File = Globals.CmdFilePath+"/Chassis_ORT.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_ORT.dat")
     Globals.TestData['TID'] = 'ORT'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globasl.ComPort, Globals.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globasl.ComPort, Globals.Cmd_File )
     Final()
     return()
 #__________________________________________________________________________
 def Run_Chassis_Test_Pre_BI_Example():
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Chassis_Pre_BI.dat";
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_Pre_BI.dat");
 
     Globals.TestData['TID'] = 'IST'
     Globals.Exit_On_Timeout = 1
-    XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globsl.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globsl.Cmd_File )
     Final()
     final()
 #__________________________________________________________________________
 def Run_Bench_Test_Example():
-    Globals.Cmd_File = Globals.CmdFilePath+"/Bench.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Bench.dat")
     Globals.TestData['TID'] = 'Bench'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stokee
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
@@ -532,11 +545,11 @@ def Run_Bench_Test_Example():
 
 def Run_Prog_Example():      #GLC Generation
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Bench_Prog.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Bench_Prog.dat")
     Globals.TestData['TID'] = 'Program';
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
@@ -544,13 +557,13 @@ def Run_Prog_Example():      #GLC Generation
 #__________________________________________________________________________
 def Run_Prog2_Example():          #XGLC Generation(gen2)
 
-    Globals.Cmd_File = Globals.mdFilePath+"/Bench_Prog.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Bench_Prog.dat")
     print ("Command File path:  "+Globals.CmdFilePath)
     Globals.Baud = "115200"    #  Gen 2 currently runs at 115200 buad
     Globals.TestData['TID'] = 'Program'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
@@ -558,13 +571,13 @@ def Run_Prog2_Example():          #XGLC Generation(gen2)
 #__________________________________________________________________________
 def Run_Prog_Flash2_Example():         #XGLC Generation(gen2)
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Bench_Prog_Flash.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Bench_Prog_Flash.dat")
     print ("Command File path:  $CmdFilePath\n");
-    GLobals.Baud = "115200"    #  Gen 2 currently runs at 115200 buad
+    Globals.Baud = "115200"    #  Gen 2 currently runs at 115200 buad
     Globals.TestData['TID'] = 'DEBUG'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
@@ -572,24 +585,24 @@ def Run_Prog_Flash2_Example():         #XGLC Generation(gen2)
 #__________________________________________________________________________
 def Run_Bench_Test2_Example():         #XGLC Generation(gen2)
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Bench.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Bench.dat")
     print ("Command File path:  "+Globals.CmdFilePath)
     Globals.Baud = "115200"    #  Gen 2 currently runs at 115200 buad
     Globals.TestData['TID'] = 'Bench'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
 #__________________________________________________________________________
 def Run_Chassis_Test_Pre_BI_XGLC_Example(): 
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Chassis_Pre_BI_XGLC.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_Pre_BI_XGLC.dat")
     Globals.TestData['TID'] = 'IST'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
@@ -597,11 +610,11 @@ def Run_Chassis_Test_Pre_BI_XGLC_Example():
 
 def Run_Chassis_Test_BI_XGLC_Example(): 
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Chassis_BI_XGLC.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_BI_XGLC.dat")
     Globals.TestData['TID'] = 'BI'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
@@ -609,22 +622,22 @@ def Run_Chassis_Test_BI_XGLC_Example():
 
 def Run_Chassis_Test_Post_BI_XGLC_Example(): 
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Chassis_Post_BI_XGLC.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_Post_BI_XGLC.dat")
     Globals.TestData['TID'] = 'FST'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
     Final()
     return()
 #__________________________________________________________________________
 
 def Run_Chassis_Test_Config_XGLC_Example(): 
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Chassis_Config_XGLC.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_Config_XGLC.dat")
     Globals.TestData['TID'] = 'SHIP'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
@@ -632,12 +645,12 @@ def Run_Chassis_Test_Config_XGLC_Example():
 
 def Run_Chassis_Extended_XGLC_Example(): 
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Chassis_Extended_XGLC.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_Extended_XGLC.dat")
     Globals.TestData['TID'] = 'EXT'
     Globals.Exit_On_Timeout = 0;
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
@@ -645,24 +658,24 @@ def Run_Chassis_Extended_XGLC_Example():
 
 def Run_Chassis_ORT_XGLC_Example():     #xglc
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Chassis_ORT_XGLC.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Chassis_ORT_XGLC.dat")
     Globals.TestData['TID'] = 'ORT'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
 #__________________________________________________________________________
 def Run_Bench_Debug_Example():         #XGLC Generation(gen2)
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Debug_Bench.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Debug_Bench.dat")
     print ("Command File path:  $CmdFilePath\n");
     Globals.Baud = "115200"    #  Gen 2 currently runs at 115200 buad
     Globals.TestData['TID'] = 'DEBUG'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
@@ -670,11 +683,11 @@ def Run_Bench_Debug_Example():         #XGLC Generation(gen2)
 
 def Run_Debug_XGLC_StokeOSReload_Example(): 
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Debug_Boot_StokeOS_Loop.dat"
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Debug_Boot_StokeOS_Loop.dat")
     Globals.TestData['TID'] = 'DEBUG';
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
@@ -682,12 +695,12 @@ def Run_Debug_XGLC_StokeOSReload_Example():
 #Run_Debug_Reboot_XLP
 def Run_Debug_Bench_XGLC_PowerCycle_Example(): 
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Debug_Bench_XGLC_PowerCycle.dat";
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Debug_Bench_XGLC_PowerCycle.dat");
     Globals.Baud = "115200"    #  Gen 2 currently runs at 115200 buad
     Globals.TestData['TID'] = 'DEBUG'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
@@ -695,12 +708,12 @@ def Run_Debug_Bench_XGLC_PowerCycle_Example():
     #Run_Debug_Reboot_XLP
 def Run_Debug_Bench_XGLC_PowerCycle_Select_Margin_Example(): 
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Debug_Bench_XGLC_PowerCycle_select_margin.dat";
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Debug_Bench_XGLC_PowerCycle_select_margin.dat");
     Globals.Baud = "115200";    #  Gen 2 currently runs at 115200 buad
     Globals.TestData['TID'] = 'DEBUG'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
@@ -708,12 +721,12 @@ def Run_Debug_Bench_XGLC_PowerCycle_Select_Margin_Example():
 #Run_Debug_Reboot_XLP
 def Run_Debug_Bench_XGLC_PowerCycle_GPP_DRAM_Example(): 
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Debug_Bench_XGLC_PowerCycle_GPP_DRAM.dat";
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Debug_Bench_XGLC_PowerCycle_GPP_DRAM.dat");
     Globals.Baud = "115200";    #  Gen 2 currently runs at 115200 buad
     Globals.TestData['TID'] = 'DEBUG'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
@@ -721,36 +734,36 @@ def Run_Debug_Bench_XGLC_PowerCycle_GPP_DRAM_Example():
 #Run_Debug_Reboot_XLP
 def Run_Debug_Bench_XGLC_Reboot_Example(): 
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Debug_Bench_XGLC_Reboot.dat";
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Debug_Bench_XGLC_Reboot.dat");
     Globals.Baud = "115200";    #  Gen 2 currently runs at 115200 buad
     Globals.TestData['TID'] = 'DEBUG'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
 #__________________________________________________________________________
 def Run_Debug_Flashimage_XGLC_Example(): 
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Debug_Flashimage_XGLC.dat";
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Debug_Flashimage_XGLC.dat");
     Globals.Baud = "115200";    #  Gen 2 currently runs at 115200 buad
     Globals.TestData['TID'] = 'DEBUG'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
 #__________________________________________________________________________
 def Run_Debug_Gen2_Example(): 
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Debug.dat";
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Debug.dat");
     Globals.Baud = "9600"    #  Gen 2 currently runs at 115200 buad
     Globals.TestData['TID'] = 'DEBUG'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
@@ -758,24 +771,24 @@ def Run_Debug_Gen2_Example():
 #Run_Debug_Reboot_XLP
 def Run_Debug_Reboot_XLP_Example(): 
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Debug_XLP_Reboot.dat";
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Debug_XLP_Reboot.dat");
     Globals.Baud = "115200"    #  Gen 2 currently runs at 115200 buad
     Globals.TestData['TID'] = 'DEBUG'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()
 #__________________________________________________________________________
 def Run_Debug_XGLC_Example(): 
 
-    Globals.Cmd_File = Globals.CmdFilePath+"/Debug.dat";
+    Globals.Cmd_File = os.path.join(Globals.CmdFilePath,"Debug.dat");
     Globals.Baud = "9600"    #  Gen 2 currently runs at 115200 buad
     Globals.TestData['TID'] = 'DEBUG'
     Globals.Exit_On_Timeout = 1
-    Globals.XML_Header() # Added JSW - Stoke
-    Cmd_Expect( 'Serial', Globals.ComPort, Globas.Cmd_File )
+    Logs.XML_Header() # Added JSW - Stoke
+    Connect.Cmd_Expect( 'Serial', Globals.ComPort, Globals.Cmd_File )
 
     Final()
     return()

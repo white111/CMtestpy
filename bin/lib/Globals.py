@@ -65,6 +65,7 @@ global TelnetEscape; TelnetEscape	  = "["		      # ctrl[ modifies the telnet exc
 global Baud; Baud            = '9600'               # Updated by TestCtrl.cfg
 global Bell; Bell            = ""
 global Comm_Log; Comm_Log        = ''                   # Log file for com app (minicom)
+global ComPort; ComPort = ""
 global Screen_Data; Screen_Data     = []                   # use this instead
 global Debug; Debug = 0
 global Erc; Erc             = 0
@@ -180,10 +181,12 @@ global GlobalVar; GlobalVar = {   # Globals Dictionary will use to replace perl 
             "UsersCfgPath"      : join("" ,"users.cfg"),
             "User_ID" : "none",  # Used [here] for authentication
             "User_Level"  : 0,  # Used [here] for authentication
-            "UserID_Check" : 1,   # Default chacking user ID, Not currently enabled/debuged  
+            "UserID_Check" : 1,   # Default chacking user ID, Not currently enabled/debuged
+            "SPort" : "",
             
             
             }
+global Menu1 ; Menu1=""  # Menu selection for regression test
 global Menu_List;Menu_List = []
 global Menu_Desc;Menu_Desc = []
 global Menu_Cmd;Menu_Cmd  = []
@@ -216,13 +219,15 @@ global File; File  = []         #List of Files and directory paths
 global  Dir_List; Dir_List  = []    # List of (sub)dirs in a spec'd dir (&File_List)
 global File_List; File_List = []    # List of files in a spec'd dir (&File_List)
 #global FH; FH = 'FH00'      # The nested (recursive) File Handle
+global FH ; FH = () #Global list of files and handles
+global CmdFileNestLmt;CmdFileNestLmt=10  
 #Stats
 RC = 0
 
 global CurrentUserID;CurrentUserID          = 'none'                   # User ID / Badge #
 global CurrentUser_Level;CurrentUser_Level		 = ''					 # User Access level, Coded Decimal in config.
 global User_ID;User_ID         = "Default"                   # Used [here] for authentication
-global User_Level;User_Level         = {}  
+global User_Level;User_Level         = 0  
 
 global Exit_On_Error; Exit_On_Error = 0
 

@@ -349,12 +349,14 @@ def Debug_Cat(File):
     return
 
 #_____________________________________________________________________________
-def Exit(erc, Msg) :
+def Exit(erc, Msg='') :
     "Calls Exit_TestExec()"
+    if Msg == '' : Msg = "Exiting with code {}".format(erc)
     Exit_TestExec(erc,Msg) 
     return
 #_____________________________________________________________________________
-def Exit_TestExec( erc, Msg) :
+def Exit_TestExec( erc, Msg='') :
+    if Msg == '' : Msg = "Exiting with code {}".format(erc)
     r"A cleaner variant of bye or exit! "
     r"Renamed (from &Exit) 03-09-22 to avoid redef. "
     r"Exit() must be the responsibility of 'main' (even"
@@ -388,7 +390,7 @@ def Exit_TestExec( erc, Msg) :
     if Erc :
         Logs.Log_Error(Msg)
     else :
-        if not Msg == '' :   Print_Log( Type, Msg ) 
+        if not Msg == '' :   Logs.Print_Log( Type, Msg ) 
 
     ASCIIColor('reset')
     Logs.Log_History(2)
@@ -616,8 +618,9 @@ def PETC(MSG='',PETC_Dont_Stop=0,Silent=0):
         if not PETC_Dont_Stop :
             if not Silent : MSG += ""
             print(MSG+":")
-            X = input()[:-1]  # get input and chop last char
+            X = input()  # get input and chop last char
             X.upper
+            if Globals.Debug : print ("captured char [{}]".format(X))
             if X == 'Q' : exit 
             if X == 'R' : PETC_Dont_Stop = 1
 
