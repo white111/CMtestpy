@@ -101,6 +101,8 @@ def main():
                      help="Overide all Loop counts(seconds)") 
     parser.add_option("-F", "--Force", dest="Force", type="int", default=0,
                       help="Force Session #")
+    parser.add_option("-r", "--regress", dest="Regress", default="null",
+                      help="Directly execute a subroutine")     
     parser.add_option("-U", "--User", dest="User", default="None",
                       help="Set User ID")
     parser.add_option("-O", "--Output", dest="Output", default=r"cmtest.xml",
@@ -111,6 +113,7 @@ def main():
     Globals.Debug += options.Debug
     Globals.Verbose += options.Verbose
     Globals.Menu1 = options.Menu1
+    Globals.Regress = options.Regress
     Globals.Session = options.Session
     Globals.SessionForce = options.Force
     Globals.Force = options.Force

@@ -190,17 +190,18 @@ def chomp(x) :
     x = x.rstrip()
     x = x.strip()
     x = x.strip("\t")
-    x = x.strip(' \t\n\r') 
+    x = x.strip(' \t\n\r')
+    x = x.strip('\n') 
+    x = x.strip('\r') 
     #if x.endswith("\r\n"): return x[:-2]
     #if x.endswith("\n"): return x[:-1]
 
     return x[:]
 #__________________________________________________________________________________
-def Cleanup(Var):
-    "Cleanup - strip leading and trailing white space(s)."
+def Cleanup_Dep(Var):
+    "Cleanup - strip leading and trailing white space(s).  # use chomp"
 
-    Var = re.sub(r"/^\s*//",Var)
-    Var = re.sub(r"/\s*$//",Var)
+    Var = Var.strip
 
     return (Var)
 #____________________________________________________________________________________
@@ -349,7 +350,7 @@ def Debug_Cat(File):
     return
 
 #_____________________________________________________________________________
-def Exit(erc, Msg='') :
+def Exit(erc=0, Msg='') :
     "Calls Exit_TestExec()"
     if Msg == '' : Msg = "Exiting with code {}".format(erc)
     Exit_TestExec(erc,Msg) 
@@ -857,5 +858,8 @@ def strip_ansi_codes(s):
     #return re.sub(r'(\x9B|\x1B\[)[0-?]*[ -\/]*[@-~]', '', s)
     #return re.sub(r'\x1b\[([0-9,A-Z]{1,2}(;[0-9]{1,2})?(;[0-9]{3})?)?[m|K]?\\r\\n', '', s)
 #_______________________________________________________________________________
-
+def escape_ansi(line):
+    ansi_escape = re.compile(r'(\x9B|\x1B\[)[0-?]*[ -/]*[@-~]')
+    return ansi_escape.sub('', line)
+#_______________________________________________________________________________
 1;

@@ -143,6 +143,10 @@ global Test_Log ; Test_Log        = ''                   # File name of the (pos
 global TestLogPath; TestLogPath     = ''                   # subdirectory of $LogPath
 global UUT_IP ; UUT_IP         = ''                   # The IP Address to be assigned for this session
 global UUT_IP2 ; UUT_IP2         = ''                   # The IP Address to be assigned to the next session
+global Power_type; Power_type = ''      # APC | LPT | [manual]
+global Power_Switch_IP; Power_Switch_IP = ""
+global Power_Switch_IP2; Power_Switch_IP2 = ""
+global States;States   = [ 0]  #Powerswitch
                                                  #  (we need to know this for systest run)
 global UUT_Type;UUT_Type        = ''                  # Specific product discovered in boot banner
 global Verbose;Verbose         = 0;                    # $opt_v parameter
@@ -171,8 +175,8 @@ global GlobalVar; GlobalVar = {   # Globals Dictionary will use to replace perl 
             "Out_File"        : 0,
             "PC_IP1"          : 0,
             "PC_IP2"          : 0,
-            "Power_Switch_IP" : 0,
-            "Power_Switch2_IP" : 0,
+            "Power_Switch_IP" : "",
+            "Power_Switch2_IP" : "",
             "Stats_Path"      : join(FileTmpDir,"stats"),  # Usually /var/local/cmtest/stats
             "UUT_IP_Base"     : 21,
             "UUT_IP_Range"    : 21,
@@ -190,6 +194,7 @@ global Menu1 ; Menu1=""  # Menu selection for regression test
 global Menu_List;Menu_List = []
 global Menu_Desc;Menu_Desc = []
 global Menu_Cmd;Menu_Cmd  = []
+global Regress; Regress="null"
 global GP_Path; GP_Path ="none"
 global Util_only;  Util_only = 0
 global UserID; UserID = "none"
@@ -199,7 +204,10 @@ global Out_File; Out_File = "" # optional -O ouput xml file
 # from Connect
 global Loop_Time;Loop_Time       = 0;        # ATT inside of the loop cycle
 global LBuffer;LBuffer         = ();       # Loop buff
+global Buffer; Buffer = ();
 global Caching; Caching         = 0;        # Set by a <Loop> cmd, unset by </Loop>
+global Bypass; Bypass=0
+
 #    our $Retry_Count     = 0;        # Set by a <Retry> cmd, unset by </Retry>
 
 #print(globals())
@@ -219,7 +227,7 @@ global File; File  = []         #List of Files and directory paths
 global  Dir_List; Dir_List  = []    # List of (sub)dirs in a spec'd dir (&File_List)
 global File_List; File_List = []    # List of files in a spec'd dir (&File_List)
 #global FH; FH = 'FH00'      # The nested (recursive) File Handle
-global FH ; FH = () #Global list of files and handles
+global FH ; FH = [] #Global list of files and handles
 global CmdFileNestLmt;CmdFileNestLmt=10  
 #Stats
 RC = 0

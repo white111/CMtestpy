@@ -148,35 +148,41 @@ def Menu_Show(Menu):    #!!! Move this to
     print("\n")
     y=0
     
-    while ( y==0 or y > len(Globals.Menu_List) + 1) :
-        y = int(Util.PETC('Select item #?'))
+    if Globals.Regress == "null" :
+        while ( y==0 or y > len(Globals.Menu_List) + 1) :
+            y = int(Util.PETC('Select item #?'))
     
     y -=1                # We're base 0, not 1
     
     Globals.TestData['SW_Ver']= Init_Product1.Software_OS_release_gbl
     Globals.TestData['Diag_Ver'] = Init_Product1.diag_ver_gbl
     Globals.Stats['Status'] = 'Started'
-    Stats.Update_All 
-    print("Exec\'ing {}[{}]...\n".format(Globals.Menu_Cmd[y],y))
-    #locals()[Globals.Menu_Cmd[y]]()
-    #try:
-    if Globals.Menu1 == '' :
-        if Globals.Debug: print ("Exc Func Menu.{}".format(Globals.Menu_Cmd[y]+"()"))
-        method = eval(Globals.Menu_Cmd[y])
-        method()            
-            #func = getattr(Menu,Globals.Menu_Cmd[y],"Menu_main")
-        #else :
-            #method = eval(Menu,Globals.Menu1)
-            #method()            
-            ##func = getattr(Menu,Globals.Menu1)
-            
-    #except AttributeError:
-        #print ('function not found "%s" (%s)' % (Globals.Menu_Cmd[y], y))
-        ##Run_Prog_Example()
-    #else:
-        #method = eval("Menu_main")
-        #method()
-    #&Exec ($Menu_Cmd [$y]);     # Find the sub [last arg in Menu_add_...]
+    Stats.Update_All
+    if Globals.Regress == "null" :
+        print("Exec\'ing {}[{}]...\n".format(Globals.Menu_Cmd[y],y))
+        #locals()[Globals.Menu_Cmd[y]]()
+        #try:
+        if Globals.Menu1 == '' :
+            if Globals.Debug: print ("Exc Func Menu.{}".format(Globals.Menu_Cmd[y]+"()"))
+            method = eval(Globals.Menu_Cmd[y])
+            method()            
+                #func = getattr(Menu,Globals.Menu_Cmd[y],"Menu_main")
+            #else :
+                #method = eval(Menu,Globals.Menu1)
+                #method()            
+                ##func = getattr(Menu,Globals.Menu1)
+                
+        #except AttributeError:
+            #print ('function not found "%s" (%s)' % (Globals.Menu_Cmd[y], y))
+            ##Run_Prog_Example()
+        #else:
+            #method = eval("Menu_main")
+            #method()
+        #&Exec ($Menu_Cmd [$y]);     # Find the sub [last arg in Menu_add_...]
+    else:
+        print("Regressing\'ing {}...\n".format(Globals.Regress+"()"))
+        method = eval(Globals.Regress)
+        method()       
     return
 
 #_____________________________________________________________________________
@@ -793,4 +799,4 @@ def Run_Debug_XGLC_Example():
     Final()
     return()
 #__________________________________________________________________________
-1;
+

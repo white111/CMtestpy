@@ -13,6 +13,7 @@
 # Changes:    Conversion to Python from Perl 050917 JSW
 #
 # Still ToDo:
+#            Convert to logging python package in python
 #
 # License:   This software is subject to and may be distributed under the
 #            terms of the GNU General Public License as described in the
